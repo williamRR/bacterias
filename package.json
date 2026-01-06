@@ -1,0 +1,34 @@
+{
+  "name": "virus-game",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "tsx server.ts",
+    "build": "next build",
+    "start": "NODE_ENV=production tsx server.ts",
+    "lint": "next lint",
+    "generate-assets": "tsx scripts/generate-assets.ts",
+    "generate-assets:cards": "tsx scripts/generate-assets.ts --type=cards",
+    "generate-assets:icons": "tsx scripts/generate-assets.ts --type=icons",
+    "generate-assets:backgrounds": "tsx scripts/generate-assets.ts --type=backgrounds"
+  },
+  "dependencies": {
+    "next": "^14.2.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "socket.io": "^4.7.0",
+    "socket.io-client": "^4.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "autoprefixer": "^10.4.0",
+    "eslint": "^8",
+    "eslint-config-next": "^14.2.0",
+    "postcss": "^8.4.0",
+    "tailwindcss": "^3.4.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5"
+  }
+}

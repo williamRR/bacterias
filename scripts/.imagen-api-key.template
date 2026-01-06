@@ -1,0 +1,7 @@
+# Instrucciones:
+# 1. Ve a https://imagen.ai y regístrate gratis
+# 2. Crea una API Key en "API Keys"
+# 3. Renombra este archivo a .imagen-api-key (sin el .template al final)
+# 4. Pega tu API key aquí (sin espacios ni comillas)
+
+TU_API_KEY_AQUI

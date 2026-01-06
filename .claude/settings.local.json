@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(yarn add:*)",
+      "Bash(yarn dev:*)",
+      "Bash(yarn remove:*)",
+      "Bash(pkill:*)",
+      "Bash(lsof:*)",
+      "Bash(xargs -r kill -9:*)",
+      "Bash(fuser:*)",
+      "Bash(npx tsc:*)",
+      "Bash(curl:*)",
+      "Bash(mkdir:*)",
+      "Bash(npm run generate-assets:icons:*)",
+      "Bash(chmod:*)",
+      "Bash(gh auth status:*)",
+      "Bash(gh repo create:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}
