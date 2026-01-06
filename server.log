@@ -1,0 +1,183 @@
+
+> virus-game@0.1.0 dev
+> tsx server.ts
+
+ ⚠ Invalid next.config.js options detected: 
+ ⚠     Unrecognized key(s) in object: 'allowedDevOrigins' at "experimental"
+ ⚠ See more info here: https://nextjs.org/docs/messages/invalid-next-config
+> Ready on http://0.0.0.0:3002
+ ○ Compiling /create-room ...
+ ✓ Compiled /create-room in 4s (577 modules)
+ GET /create-room 200 in 4409ms
+ ✓ Compiled in 457ms (275 modules)
+Cliente conectado: PM749qw7MewiQvfSAAAC
+ ○ Compiling /room/[id] ...
+ ✓ Compiled /room/[id] in 1530ms (570 modules)
+ GET /room/C3N8X8 200 in 2290ms
+Cliente desconectado: PM749qw7MewiQvfSAAAC
+Eliminando jugador PM749qw7MewiQvfSAAAC de la sala C3N8X8
+Sala C3N8X8 vacía, eliminando
+Cliente conectado: aj0MoNQFMahV7suqAAAF
+ GET /create-room 200 in 34ms
+Cliente conectado: AbQtzqUBJ6zDWZ03AAAI
+Cliente desconectado: AbQtzqUBJ6zDWZ03AAAI
+Eliminando jugador AbQtzqUBJ6zDWZ03AAAI de la sala WXJVXX
+Sala WXJVXX vacía, eliminando
+ GET /room/WXJVXX 200 in 49ms
+Cliente conectado: uGnOyAszHaCxHVz6AAAL
+Cliente desconectado: uGnOyAszHaCxHVz6AAAL
+Cliente desconectado: aj0MoNQFMahV7suqAAAF
+ ✓ Compiled in 498ms (584 modules)
+ GET /create-room 200 in 168ms
+Cliente conectado: ljlPNHkVk4RiqAqiAAAO
+ GET /room/AE2LXT 200 in 56ms
+Cliente desconectado: ljlPNHkVk4RiqAqiAAAO
+Eliminando jugador ljlPNHkVk4RiqAqiAAAO de la sala AE2LXT
+Sala AE2LXT vacía, eliminando
+Cliente conectado: yC93mNgywV-o81GEAAAR
+Cliente desconectado: yC93mNgywV-o81GEAAAR
+ GET /create-room 200 in 25ms
+Cliente conectado: tSYlBawPN1hwRrEjAAAU
+ GET /room/48N5DW 200 in 60ms
+Cliente desconectado: tSYlBawPN1hwRrEjAAAU
+Eliminando jugador tSYlBawPN1hwRrEjAAAU de la sala 48N5DW
+Sala 48N5DW vacía, eliminando
+Cliente conectado: pIuiOgDvje2peCKvAAAX
+Cliente desconectado: pIuiOgDvje2peCKvAAAX
+ ✓ Compiled in 519ms (584 modules)
+ GET /create-room 200 in 168ms
+Cliente conectado: POlem2O_yyeEk4AkAAAa
+ GET /room/XYSMFD 200 in 76ms
+Cliente desconectado: POlem2O_yyeEk4AkAAAa
+Eliminando jugador POlem2O_yyeEk4AkAAAa de la sala XYSMFD
+Sala XYSMFD vacía, eliminando
+Cliente conectado: dCtOnrEuyrHp70ejAAAd
+Cliente desconectado: dCtOnrEuyrHp70ejAAAd
+ ✓ Compiled in 278ms (584 modules)
+ GET /create-room 200 in 88ms
+Cliente conectado: Uc2fyj7cCMsUkqXIAAAg
+ GET /room/70X5NE 200 in 84ms
+Cliente desconectado: Uc2fyj7cCMsUkqXIAAAg
+Eliminando jugador Uc2fyj7cCMsUkqXIAAAg de la sala 70X5NE
+Sala 70X5NE vacía, eliminando
+Cliente conectado: ISgMMHu-lS4asmM0AAAj
+Cliente desconectado: ISgMMHu-lS4asmM0AAAj
+ ✓ Compiled in 463ms (584 modules)
+ ⨯ ./src/app/room/[id]/page.tsx
+Error: 
+  [31mx[0m the name `newSocket` is defined multiple times
+    ,-[[36;1;4m/home/william/Develop/bacterias/src/app/room/[id]/page.tsx[0m:44:1]
+ [2m44[0m |     }
+ [2m45[0m |     setPlayerName(name);
+ [2m46[0m | 
+ [2m47[0m |     const newSocket = io();
+    : [31;1m          ^^^^|^^^^[0m
+    :               [31;1m`-- [31;1mprevious definition of `newSocket` here[0m[0m
+ [2m48[0m |     setSocket(newSocket);
+ [2m49[0m |     socketRef.current = newSocket;
+ [2m50[0m | 
+ [2m51[0m |     // Si no hay nombre guardado, pedirlo
+ [2m52[0m |     if (!name) {
+ [2m53[0m |       name = prompt('Por favor ingresa tu nombre:');
+ [2m54[0m |       if (!name) {
+ [2m55[0m |         alert('Necesitas ingresar un nombre para jugar');
+ [2m56[0m |         window.location.href = '/';
+ [2m57[0m |         return;
+ [2m58[0m |       }
+ [2m59[0m |       localStorage.setItem('playerName', name);
+ [2m60[0m |     }
+ [2m61[0m |     setPlayerName(name);
+ [2m62[0m | 
+ [2m63[0m |     const newSocket = io();
+    : [33;1m          ^^^^|^^^^[0m
+    :               [33;1m`-- [33;1m`newSocket` redefined here[0m[0m
+ [2m64[0m |     setSocket(newSocket);
+ [2m65[0m |     
+ [2m66[0m |     // Esperar a que el socket esté conectado para obtener el ID
+    `----
+
+Import trace for requested module:
+./src/app/room/[id]/page.tsx
+ ⨯ ./src/app/room/[id]/page.tsx
+Error: 
+  [31mx[0m the name `newSocket` is defined multiple times
+    ,-[[36;1;4m/home/william/Develop/bacterias/src/app/room/[id]/page.tsx[0m:44:1]
+ [2m44[0m |     }
+ [2m45[0m |     setPlayerName(name);
+ [2m46[0m | 
+ [2m47[0m |     const newSocket = io();
+    : [31;1m          ^^^^|^^^^[0m
+    :               [31;1m`-- [31;1mprevious definition of `newSocket` here[0m[0m
+ [2m48[0m |     setSocket(newSocket);
+ [2m49[0m |     socketRef.current = newSocket;
+ [2m50[0m | 
+ [2m51[0m |     // Si no hay nombre guardado, pedirlo
+ [2m52[0m |     if (!name) {
+ [2m53[0m |       name = prompt('Por favor ingresa tu nombre:');
+ [2m54[0m |       if (!name) {
+ [2m55[0m |         alert('Necesitas ingresar un nombre para jugar');
+ [2m56[0m |         window.location.href = '/';
+ [2m57[0m |         return;
+ [2m58[0m |       }
+ [2m59[0m |       localStorage.setItem('playerName', name);
+ [2m60[0m |     }
+ [2m61[0m |     setPlayerName(name);
+ [2m62[0m | 
+ [2m63[0m |     const newSocket = io();
+    : [33;1m          ^^^^|^^^^[0m
+    :               [33;1m`-- [33;1m`newSocket` redefined here[0m[0m
+ [2m64[0m |     setSocket(newSocket);
+ [2m65[0m |     
+ [2m66[0m |     // Esperar a que el socket esté conectado para obtener el ID
+    `----
+
+Import trace for requested module:
+./src/app/room/[id]/page.tsx
+ ✓ Compiled in 461ms (570 modules)
+ GET /create-room 200 in 162ms
+Cliente conectado: J2mWgnzGHh36nOsCAAAm
+ GET /room/632N2U 200 in 74ms
+Cliente desconectado: J2mWgnzGHh36nOsCAAAm
+Eliminando jugador J2mWgnzGHh36nOsCAAAm de la sala 632N2U
+Sala 632N2U vacía, eliminando
+Cliente conectado: 5dC507S0If8MASzWAAAp
+Cliente desconectado: 5dC507S0If8MASzWAAAp
+ ✓ Compiled in 301ms (584 modules)
+ ✓ Compiled in 292ms (584 modules)
+ ✓ Compiled in 323ms (584 modules)
+ GET /create-room 200 in 148ms
+Cliente conectado: _fgyOh1DG2QT4pJmAAAs
+ GET /room/HPZJT1 200 in 87ms
+Cliente desconectado: _fgyOh1DG2QT4pJmAAAs
+Eliminando jugador _fgyOh1DG2QT4pJmAAAs de la sala HPZJT1
+Sala HPZJT1 vacía, eliminando
+Cliente conectado: b5W-BXFuNIySMOBnAAAu
+Cliente desconectado: b5W-BXFuNIySMOBnAAAu
+ ✓ Compiled in 682ms (584 modules)
+ ✓ Compiled in 352ms (584 modules)
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename '/home/william/Develop/bacterias/.next/cache/webpack/server-development/2.pack.gz_' -> '/home/william/Develop/bacterias/.next/cache/webpack/server-development/2.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename '/home/william/Develop/bacterias/.next/cache/webpack/client-development/2.pack.gz_' -> '/home/william/Develop/bacterias/.next/cache/webpack/client-development/2.pack.gz'
+ ✓ Compiled in 291ms (570 modules)
+ ✓ Compiled in 355ms (570 modules)
+ ✓ Compiled in 1900ms (586 modules)
+ ✓ Compiled in 578ms (586 modules)
+ ✓ Compiled in 314ms (586 modules)
+ ✓ Compiled in 492ms (586 modules)
+ ✓ Compiled in 642ms (586 modules)
+ ✓ Compiled in 257ms (283 modules)
+ ✓ Compiled in 569ms (586 modules)
+ ✓ Compiled in 2.2s (586 modules)
+ ✓ Compiled in 394ms (586 modules)
+ ✓ Compiled in 463ms (586 modules)
+ ✓ Compiled in 1611ms (586 modules)
+ ✓ Compiled in 1902ms (586 modules)
+ ✓ Compiled in 425ms (586 modules)
+ ✓ Compiled in 402ms (586 modules)
+ ✓ Compiled in 1207ms (572 modules)
+ ✓ Compiled in 908ms (572 modules)
+ ✓ Compiled in 183ms (572 modules)
+ ✓ Compiled in 483ms (586 modules)
+ ✓ Compiled in 447ms (586 modules)
+ ✓ Compiled in 441ms (572 modules)
+ ✓ Compiled in 207ms (572 modules)
+ ✓ Compiled in 287ms (283 modules)
