@@ -9,9 +9,9 @@
   restartPolicyMaxRetries = 10
 
 [[services.ports]]
-  port = 3012
+  port = 8080
   type = "TCP"
 
 [env]
-  PORT = "3012"
+  PORT = "8080"
   NODE_ENV = "production"
