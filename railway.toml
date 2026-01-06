@@ -1,5 +1,6 @@
 [build]
   builder = "NIXPACKS"
+  buildCommand = "pnpm install --no-frozen-lockfile && npm run build"
 
 [deploy]
   healthcheckPath = "/api/health"
