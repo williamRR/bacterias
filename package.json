@@ -3,9 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "tsx server.ts",
+    "dev": "next dev",
+    "dev:server": "tsx server.ts",
     "build": "next build",
-    "start": "NODE_ENV=production tsx server.ts",
+    "start": "next start",
+    "start:server": "NODE_ENV=production tsx server.ts",
     "lint": "next lint",
     "generate-assets": "tsx scripts/generate-assets.ts",
     "generate-assets:cards": "tsx scripts/generate-assets.ts --type=cards",
