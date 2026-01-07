@@ -34,10 +34,10 @@ export default function PlayerBoards({
 
   return (
     <>
-      {/* Mobile: horizontal scroll of compact boards (now centered if few) */}
-      <div className="md:hidden flex gap-2 md:gap-4 overflow-x-auto pb-2 md:pb-4 snap-x snap-mandatory scroll-smooth justify-center">
+      {/* Mobile: vertical scroll of compact boards */}
+      <div className="md:hidden flex flex-col gap-3 overflow-y-auto pb-4 snap-y snap-mandatory scroll-smooth px-2 max-h-[40vh]">
         {others.map(player => (
-          <div key={player.id} className="min-w-[260px] md:min-w-[280px] flex-none snap-center">
+          <div key={player.id} className="min-w-[280px] md:min-w-[320px] flex-none snap-center">
             <PlayerBoard
               player={player}
               isCurrentPlayer={player.id === currentPlayer?.id}
@@ -56,10 +56,10 @@ export default function PlayerBoards({
         ))}
       </div>
 
-      {/* Desktop/tablet: smarter grid layout centered */}
-      <div className="hidden md:flex flex-wrap gap-6 justify-center items-start mb-8 w-full max-w-6xl mx-auto">
+      {/* Desktop/tablet: vertical layout */}
+      <div className="hidden md:flex flex-col gap-4 items-center mb-6 md:mb-8 w-full max-w-4xl mx-auto">
         {others.map(player => (
-          <div key={player.id} className={`w-full ${others.length === 1 ? 'max-w-2xl' : 'max-w-md'} transition-all duration-300`}>
+          <div key={player.id} className="w-full max-w-3xl transition-all duration-300 scale-90 origin-top">
             <PlayerBoard
               player={player}
               isCurrentPlayer={player.id === currentPlayer?.id}
