@@ -40,6 +40,36 @@ app.prepare().then(() => {
         return;
       }
 
+      // Debug endpoint para ver estado de una sala
+      if (req.url?.startsWith('/api/room/')) {
+        const roomId = req.url.split('/').pop();
+        const room = getRoom(roomId);
+        if (room) {
+          res.setHeader('Content-Type', 'application/json');
+          const state = {
+            roomId: room.id,
+            gameState: {
+              gameStarted: room.gameState.gameStarted,
+              gameEnded: room.gameState.gameEnded,
+              currentPlayerIndex: room.gameState.currentPlayerIndex,
+              discardPile: room.gameState.discardPile.map(c => ({
+                id: c.id,
+                type: c.type,
+                color: c.color,
+                treatmentType: c.treatmentType
+              })),
+              deckCount: room.gameState.deck.length
+            },
+            players: room.players.size
+          };
+          res.end(JSON.stringify(state, null, 2));
+        } else {
+          res.statusCode = 404;
+          res.end(JSON.stringify({ error: 'Room not found' }));
+        }
+        return;
+      }
+
       const parsedUrl = parse(req.url, true);
       await handle(req, res, parsedUrl);
     } catch (err) {

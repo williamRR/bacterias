@@ -87,7 +87,9 @@ function canPlayTreatment(card: Card, gameState: any, currentPlayer: Player, tar
       const sourceSlot = getSlotFromBody(sourcePlayer.body, srcColor);
       const destSlot = getSlotFromBody(currentPlayer.body, targetColor);
 
-      if (!sourceSlot || !destSlot) return false;
+      // Ambos slots deben existir y tener órganos instalados
+      if (!sourceSlot?.organCard) return false;
+      if (!destSlot?.organCard) return false;
 
       // Debe haber al menos un virus o medicina en el origen
       const hasVirus = sourceSlot.virusCards.length > 0;

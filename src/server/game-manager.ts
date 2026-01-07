@@ -85,6 +85,17 @@ function handleTreatmentCard(roomId: string, player: Player, targetPlayer: Playe
 
       if (!sourceSlot || !destSlot) return false;
 
+      // VALIDACIÓN: Ambos slots deben tener órganos instalados
+      // No puedes transferir a un sistema que no existe
+      if (!sourceSlot.organCard) {
+        console.log('❌ ENERGY_TRANSFER - Fallo: slot origen no tiene órgano');
+        return false;
+      }
+      if (!destSlot.organCard) {
+        console.log('❌ ENERGY_TRANSFER - Fallo: slot destino no tiene órgano');
+        return false;
+      }
+
       // Validar que source y target sean diferentes
       const isSameSlot = sourcePlayer.id === targetPlayer.id && srcColor === targetColor;
       if (isSameSlot) {
@@ -206,17 +217,8 @@ function handleTreatmentCard(roomId: string, player: Player, targetPlayer: Playe
         return false;
       }
 
-      // Descartar la carta de tratamiento primero (para asegurar que se elimine)
-      const treatmentCardIndex = player.hand.findIndex(c => c.id === card.id);
-      console.log('🔍 Índice carta tratamiento:', treatmentCardIndex);
-
-      if (treatmentCardIndex !== -1) {
-        player.hand.splice(treatmentCardIndex, 1);
-        gameState.discardPile.push(card);
-        console.log('✅ Carta tratamiento eliminada de mano');
-      }
-
-      // Descartar otra carta de la mano del jugador (la última, como antes)
+      // Descartar otra carta adicional de la mano del jugador
+      // (La carta de tratamiento se descarta en el código genérico)
       if (player.hand.length > 0) {
         const discardedCard = player.hand.pop()!;
         gameState.discardPile.push(discardedCard);
@@ -342,7 +344,13 @@ export function handleGameAction(roomId: string, playerId: string, action: any):
           console.log('✅ ENTRANDO A TREATMENT BLOCK');
           const success = handleTreatmentCard(roomId, player, targetPlayer, card, targetColor, sourceColor, secondTargetPlayerId, sourcePlayerId);
           if (success) {
+            // playCard quita la carta de la mano
             playCard(gameState, player, card);
+            // NOTA: PROTOCOL_ERROR maneja su propio descarte internamente
+            // Las otras cartas de tratamiento van al descarte aquí
+            if (card.treatmentType !== 'PROTOCOL_ERROR') {
+              gameState.discardPile.push(card);
+            }
             const narration = getCardActionMessage(card, player.name, targetPlayer.name, targetColor);
             broadcastNarration(roomId, narration);
 

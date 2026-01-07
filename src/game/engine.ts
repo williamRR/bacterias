@@ -66,7 +66,8 @@ function playCard(gameState: GameState, player: Player, card: Card): void {
   const cardIndex = player.hand.findIndex(c => c.id === card.id);
   if (cardIndex !== -1) {
     player.hand.splice(cardIndex, 1);
-    gameState.discardPile.push(card);
+    // No enviar al descarte aquí - cada caso maneja el descarte según corresponda
+    // Las cartas instaladas en el tablero NO van al descarte
   }
 }
 
