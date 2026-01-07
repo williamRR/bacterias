@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
+import Modal from './Modal';
 import type { Card } from '../game/types';
 import { CardType as CardTypeEnum } from '../game/types';
-import { SPACE_ICONS, CARD_TYPE_LABELS, TREATMENT_LABELS, SYSTEM_ICONS, COLOR_SYSTEM_LABELS } from '../game/theme';
+import { SPACE_ICONS, CARD_TYPE_LABELS, TREATMENT_LABELS, TREATMENT_DESCRIPTIONS, SYSTEM_ICONS, COLOR_SYSTEM_LABELS } from '../game/theme';
 
 interface CardProps {
   card: Card;
@@ -14,125 +15,178 @@ interface CardProps {
 }
 
 export default function Card({ card, onClick, onDragStart, onDragEnd, onDiscard, selected, draggable = false }: CardProps) {
-  const [showTooltip, setShowTooltip] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
 
-  // Obtener el emoji del sistema para cartas ORGAN
-  const getSystemIcon = () => {
-    switch (card.color) {
-      case 'RED': return '🔧';
-      case 'BLUE': return '💨';
-      case 'GREEN': return '🧭';
-      case 'YELLOW': return '🛡️';
-      case 'MULTICOLOR': return '🖥️';
-      default: return '❓';
-    }
-  };
+  // Memoizar valores calculados para evitar parpadeo
+  const cardData = useMemo(() => {
+    // Obtener el emoji del sistema para cartas ORGAN
+    const getSystemIcon = () => {
+      if (!card.color) return '🎴'; // Default icon for cards without color
 
-  // Estilos específicos según el tipo de carta
-  const getCardStyle = () => {
-    const baseStyle = "border-2 rounded-xl flex flex-col items-center justify-center p-2 transition-all duration-200 flex-shrink-0 select-none relative overflow-hidden group";
+      const color = String(card.color).toUpperCase();
+      switch (color) {
+        case 'RED':
+        case '0':
+          return '🔧';
+        case 'BLUE':
+        case '1':
+          return '💨';
+        case 'GREEN':
+        case '2':
+          return '🧭';
+        case 'YELLOW':
+        case '3':
+          return '🛡️';
+        case 'MULTICOLOR':
+        case '4':
+          return '🖥️';
+        default:
+          return '🎴';
+      }
+    };
 
-    switch (card.type as CardTypeEnum) {
-      case 'ORGAN':
-        const organColors: Record<string, string> = {
-          'RED': 'border-orange-500 bg-gradient-to-br from-slate-800 to-orange-900/30',
-          'BLUE': 'border-cyan-500 bg-gradient-to-br from-slate-800 to-cyan-900/30',
-          'GREEN': 'border-emerald-500 bg-gradient-to-br from-slate-800 to-emerald-900/30',
-          'YELLOW': 'border-amber-500 bg-gradient-to-br from-slate-800 to-amber-900/30',
-          'MULTICOLOR': 'border-violet-500 bg-gradient-to-br from-slate-800 to-violet-900/30',
-        };
-        return `${baseStyle} ${organColors[card.color] || organColors['MULTICOLOR']}`;
+    // Mapeo directo de colores a labels
+    const colorToLabel: Record<string, string> = {
+      'RED': 'MOTOR',
+      '0': 'MOTOR',
+      'BLUE': 'OXÍGENO',
+      '1': 'OXÍGENO',
+      'GREEN': 'NAVEGACIÓN',
+      '2': 'NAVEGACIÓN',
+      'YELLOW': 'ESCUDOS',
+      '3': 'ESCUDOS',
+      'MULTICOLOR': 'SISTEMA OPERATIVO',
+      '4': 'SISTEMA OPERATIVO',
+    };
 
-      case 'VIRUS':
-        return `${baseStyle} border-red-600 bg-gradient-to-br from-red-950 to-red-900/50 shadow-red-500/30`;
+    const colorKey = card.color ? String(card.color).toUpperCase() : '';
+    const systemLabel = colorKey ? (colorToLabel[colorKey] || COLOR_SYSTEM_LABELS[card.color as keyof typeof COLOR_SYSTEM_LABELS] || 'SISTEMA') : null;
 
-      case 'MEDICINE':
-        return `${baseStyle} border-emerald-500 bg-gradient-to-br from-emerald-950 to-emerald-900/50 shadow-emerald-500/30`;
+    // Icono principal según el tipo
+    const getMainIcon = () => {
+      switch (card.type as CardTypeEnum) {
+        case 'ORGAN':
+          return getSystemIcon();
+        case 'VIRUS':
+          return '☣️';
+        case 'MEDICINE':
+          // Use the same icon as the system being repaired
+          return '🔧';
+        case 'TREATMENT':
+          return '⚡';
+        default:
+          return '🎴';
+      }
+    };
 
-      case 'TREATMENT':
-        return `${baseStyle} border-fuchsia-500 bg-gradient-to-br from-purple-950 to-fuchsia-900/50 shadow-fuchsia-500/30`;
+    // Subtítulo adicional
+    const getSubtitle = () => {
+      if (!systemLabel) return null;
 
-      default:
-        return `${baseStyle} border-gray-600 bg-gray-800`;
-    }
-  };
+      if (card.type === 'ORGAN' as CardTypeEnum) {
+        return systemLabel;
+      }
+      if (card.type === 'VIRUS' as CardTypeEnum) {
+        return `Avería ${systemLabel}`;
+      }
+      if (card.type === 'MEDICINE' as CardTypeEnum) {
+        return `Mejora ${systemLabel}`;
+      }
+      return null;
+    };
 
-  // Color del badge de tipo según el tipo de carta
-  const getTypeBadgeColor = () => {
-    switch (card.type as CardTypeEnum) {
-      case 'ORGAN':
-        return 'bg-slate-700 text-white';
-      case 'VIRUS':
-        return 'bg-red-600 text-white';
-      case 'MEDICINE':
-        return 'bg-emerald-600 text-white';
-      case 'TREATMENT':
-        return 'bg-fuchsia-600 text-white';
-      default:
-        return 'bg-gray-600 text-white';
-    }
-  };
+    // Descripción para el tooltip
+    const getCardDescription = () => {
+      switch (card.type as CardTypeEnum) {
+        case 'ORGAN':
+          return 'Instala este sistema en tu nave. Necesitas 4 sistemas diferentes para ganar.';
+        case 'VIRUS':
+          return systemLabel ? `Avería el sistema ${systemLabel} de un oponente. Dos sabotajes destruyen el sistema.` : 'Avería un sistema de un oponente.';
+        case 'MEDICINE':
+          return systemLabel ? `Repara o protege tu sistema ${systemLabel}. Dos protecciones lo blindan permanentemente.` : 'Repara o protege uno de tus sistemas.';
+        case 'TREATMENT':
+          return card.treatmentType ? TREATMENT_DESCRIPTIONS[card.treatmentType] : 'Efecto especial de misión.';
+        default:
+          return 'Carta de misión espacial.';
+      }
+    };
 
-  const getTypeBadgeLabel = () => {
-    switch (card.type as CardTypeEnum) {
-      case 'ORGAN':
-        return 'SISTEMA';
-      case 'VIRUS':
-        return 'SABOTAJE';
-      case 'MEDICINE':
-        return 'REPARACIÓN';
-      case 'TREATMENT':
-        return 'ACCIÓN';
-      default:
-        return 'CARTA';
-    }
-  };
+    // Color de brillo según el tipo
+    const getGlowColor = () => {
+      const glowColors: Record<string, string> = {
+        'RED': '249, 115, 22',      // MOTOR (Orange)
+        '0': '249, 115, 22',
+        'BLUE': '6, 182, 212',     // OXÍGENO (Cyan)
+        '1': '6, 182, 212',
+        'GREEN': '16, 185, 129',    // NAVEGACIÓN (Emerald)
+        '2': '16, 185, 129',
+        'YELLOW': '234, 179, 8',   // ESCUDOS (Yellow)
+        '3': '234, 179, 8',
+        'MULTICOLOR': '139, 92, 246', // SISTEMA OPERATIVO (Violet)
+        '4': '139, 92, 246',
+      };
 
-  // Icono principal según el tipo
-  const getMainIcon = () => {
-    switch (card.type as CardTypeEnum) {
-      case 'ORGAN':
-        return getSystemIcon(); // Icono del sistema específico
-      case 'VIRUS':
-        return '⚠️'; // Símbolo de peligro
-      case 'MEDICINE':
-        return '✅'; // Símbolo de OK/cura
-      case 'TREATMENT':
-        return '⚡'; // Símbolo de acción especial
-      default:
-        return '❓';
-    }
-  };
+      if (card.color) {
+        const color = String(card.color).toUpperCase();
+        if (glowColors[color]) return glowColors[color];
+      }
 
-  // Subtítulo adicional
-  const getSubtitle = () => {
-    if (card.type === 'ORGAN' as CardTypeEnum) {
-      return COLOR_SYSTEM_LABELS[card.color];
-    }
-    if (card.type === 'VIRUS' as CardTypeEnum) {
-      return `vs ${COLOR_SYSTEM_LABELS[card.color]}`;
-    }
-    if (card.type === 'MEDICINE' as CardTypeEnum) {
-      return `para ${COLOR_SYSTEM_LABELS[card.color]}`;
-    }
-    return null;
-  };
+      switch (card.type as CardTypeEnum) {
+        case 'VIRUS':
+          return '239, 68, 68'; // Sabotaje (Red)
+        case 'MEDICINE':
+          return '16, 185, 129'; // Reparación -> Navigation (Green) by default
+        case 'TREATMENT':
+          return '139, 92, 246'; // Acción -> OS (Purple) by default
+        default:
+          return '255, 255, 255';
+      }
+    };
 
-  // Descripción para el tooltip
-  const getCardDescription = () => {
-    switch (card.type as CardTypeEnum) {
-      case 'ORGAN':
-        return 'Instala este sistema en tu nave. Necesitas 4 sistemas diferentes para ganar.';
-      case 'VIRUS':
-        return `Avería el sistema ${COLOR_SYSTEM_LABELS[card.color]} de un oponente. Dos sabotajes destruyen el sistema.`;
-      case 'MEDICINE':
-        return `Repara o protege tu sistema ${COLOR_SYSTEM_LABELS[card.color]}. Dos protecciones lo blindan permanentemente.`;
-      case 'TREATMENT':
-        return card.treatmentType ? TREATMENT_LABELS[card.treatmentType] : 'Efecto especial de misión.';
-      default:
-        return 'Carta de misión espacial.';
-    }
-  };
+    // Badge de tipo
+    const getTypeBadgeLabel = () => {
+      switch (card.type as CardTypeEnum) {
+        case 'ORGAN':
+          return 'SISTEMA';
+        case 'VIRUS':
+          return 'SABOTAJE';
+        case 'MEDICINE':
+          return 'REPARACIÓN';
+        case 'TREATMENT':
+          return 'ACCIÓN';
+        default:
+          return 'CARTA';
+      }
+    };
+
+    const mainIcon = getMainIcon();
+    const subtitle = getSubtitle();
+    const treatmentLabel = card.treatmentType ? TREATMENT_LABELS[card.treatmentType] : null;
+    const glowColor = getGlowColor();
+    const typeBadgeLabel = getTypeBadgeLabel();
+    const cardDescription = getCardDescription();
+
+    return {
+      mainIcon,
+      subtitle,
+      treatmentLabel,
+      glowColor,
+      typeBadgeLabel,
+      cardDescription,
+      systemLabel,
+    };
+  }, [card]);
+
+  const handleOpenModal = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsModalOpen(true);
+  }, []);
+
+  const handleCloseModal = useCallback(() => {
+    setIsModalOpen(false);
+  }, []);
 
   const handleDragStart = (e: React.DragEvent) => {
     if (onDragStart) {
@@ -148,108 +202,209 @@ export default function Card({ card, onClick, onDragStart, onDragEnd, onDiscard,
     }
   };
 
-  const mainIcon = getMainIcon();
-  const subtitle = getSubtitle();
-  const treatmentLabel = card.treatmentType ? TREATMENT_LABELS[card.treatmentType] : null;
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+  };
 
   return (
-    <div
-      onClick={onClick}
-      draggable={draggable}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-      className={`
-        ${getCardStyle()}
-        ${selected ? 'ring-4 ring-cyan-400 scale-105 z-20' : ''}
-        ${draggable ? 'hover:shadow-cyan-400/50 hover:shadow-2xl hover:translate-y-[-8px] cursor-grab active:cursor-grabbing' : 'hover:shadow-cyan-400/30 hover:shadow-lg cursor-pointer'}
-        shadow-lg card-entrance
-        transition-all duration-300 cubic-bezier(0.34, 1.56, 0.64, 1)
+    <>
+      <div
+        ref={cardRef}
+        onClick={onClick}
+        draggable={draggable}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        className={`
+        relative w-[5.5rem] h-[7.8rem] rounded-xl flex flex-col justify-between
+        text-white select-none transition-all duration-300
+        ${selected ? 'ring-2 ring-cyan-400 scale-105' : ''}
+        ${draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}
+        ${isHovered ? 'scale-[1.03] shadow-xl' : 'shadow-md'}
+        ${card.color === 'MULTICOLOR' && card.type !== 'TREATMENT' ? 'multicolor-card' : ''}
+        ${card.type === 'TREATMENT' ? 'action-card' : ''}
       `}
-      style={{ width: '5rem', height: '7rem' }}
-    >
-      {/* Tooltip Overlay */}
-      {showTooltip && (
-        <div className="absolute inset-0 z-50 bg-black/90 backdrop-blur-md p-2 flex flex-col justify-center items-center text-center animate-in fade-in zoom-in duration-200">
-          <p className="text-[8px] font-bold text-cyan-400 mb-1 uppercase tracking-widest">{getTypeBadgeLabel()}</p>
-          <p className="text-[9px] text-white font-medium leading-tight">{getCardDescription()}</p>
-          <button
-            onClick={(e) => { e.stopPropagation(); setShowTooltip(false); }}
-            className="mt-2 text-[8px] bg-white/10 hover:bg-white/20 px-2 py-0.5 rounded-full text-white/70"
-          >
-            Cerrar
-          </button>
+        style={card.color === 'MULTICOLOR' && card.type !== 'TREATMENT' ? {} : {
+          background: `linear-gradient(145deg, #111827 0%, #1f2937 100%)`,
+          border: `2px solid rgba(${cardData.glowColor}, 0.8)`,
+          boxShadow: isHovered ? `0 0 25px rgba(${cardData.glowColor}, 0.5)` : `0 0 10px rgba(${cardData.glowColor}, 0.25)`,
+        }}
+      >
+        {/* Header */}
+        <div className="flex justify-between items-center px-2 pt-2 gap-1">
+          <span className="text-[7px] font-bold uppercase tracking-widest text-white/60 truncate max-w-[3rem]">
+            {/* {cardData.typeBadgeLabel} */}
+          </span>
+          <div className="flex gap-1 flex-shrink-0">
+            <button
+              onClick={handleOpenModal}
+              className="w-5 h-5 rounded-full bg-white/10 hover:bg-white/20 text-xs flex items-center justify-center transition-colors flex-shrink-0 pointer-events-auto"
+              style={{ color: `rgb(${cardData.glowColor})` }}
+              title="Ver detalles"
+              type="button"
+            >
+              ?
+            </button>
+            {onDiscard && (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  e.nativeEvent.stopImmediatePropagation();
+                  onDiscard();
+                }}
+                className="w-5 h-5 rounded-full bg-red-900/50 hover:bg-red-800/70 text-red-400 text-xs flex items-center justify-center transition-colors flex-shrink-0 pointer-events-auto"
+                title="Descartar"
+                type="button"
+              >
+                ✕
+              </button>
+            )}
+          </div>
         </div>
-      )}
 
-      {/* Efecto de escáner sutil cuando está seleccionada o en hover */}
-      {(selected || draggable) && <div className="absolute inset-0 scanner-effect opacity-20 pointer-events-none" />}
+        {/* Icono central */}
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-5xl drop-shadow-lg">{cardData.mainIcon}</div>
+        </div>
 
-      {/* Brillo de fondo */}
-      <div className="absolute inset-0 bg-gradient-to-tr from-white/5 via-transparent to-white/5 opacity-50 pointer-events-none" />
-
-      {/* Badge del tipo de carta - más estilizado */}
-      <div className={`absolute top-0 left-0 right-0 text-center py-0.5 md:py-1 ${getTypeBadgeColor()} rounded-t-lg shadow-inner z-10`}>
-        <span className="text-[7px] md:text-[9px] font-black tracking-widest uppercase">{getTypeBadgeLabel()}</span>
+        {/* Footer */}
+        <div className="text-center pb-2 px-2">
+          {cardData.subtitle && (
+            <div className="text-[10px] md:text-[8px] text-white/70 uppercase tracking-wide leading-tight">
+              {cardData.subtitle}
+            </div>
+          )}
+          {cardData.treatmentLabel && (
+            <div
+              className="text-[9px] md:text-[7px] mt-0.5 font-bold leading-tight"
+              style={{ color: `rgb(${cardData.glowColor})` }}
+            >
+              {cardData.treatmentLabel}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Botones de acción (Info y Descarte) */}
-      <div className="absolute top-4 right-1 left-1 flex justify-between md:top-7 items-center z-30">
-        {/* Botón de información (?) */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowTooltip(true);
-          }}
-          className="w-4 h-4 md:w-5 md:h-5 flex items-center justify-center bg-cyan-500/10 hover:bg-cyan-500/30 text-cyan-400 hover:text-cyan-200 rounded-full transition-all duration-200"
-          title="Ver información"
-        >
-          <span className="text-[10px] md:text-xs font-bold">?</span>
-        </button>
-
-        {/* Botón de descarte (X) */}
-        {onDiscard && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDiscard();
+      {/* Card Detail Modal - Rendered outside the card div */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        title="Especificaciones de la Carta"
+      >
+        <div className="flex flex-col items-center gap-6 py-4">
+          {/* Visual Preview */}
+          <div
+            className="w-32 h-44 rounded-2xl flex flex-col justify-between p-4 shadow-2xl relative overflow-hidden"
+            style={{
+              background: `linear-gradient(145deg, #111827 0%, #1f2937 100%)`,
+              border: `2.5px solid rgba(${cardData.glowColor}, 0.9)`,
+              boxShadow: `0 0 40px rgba(${cardData.glowColor}, 0.4)`,
             }}
-            className="w-4 h-4 md:w-5 md:h-5 flex items-center justify-center bg-red-500/10 hover:bg-red-500/30 text-red-400 hover:text-red-200 rounded-full transition-all duration-200 group/discard"
-            title="Descartar carta"
           >
-            <span className="text-[10px] md:text-xs font-bold transition-transform group-hover/discard:rotate-90">✕</span>
+            <div className="text-[10px] font-bold uppercase tracking-widest text-white/60">
+              {cardData.typeBadgeLabel}
+            </div>
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-7xl drop-shadow-2xl">{cardData.mainIcon}</div>
+            </div>
+            <div className="text-center">
+              {cardData.subtitle && (
+                <div className="text-[12px] text-white/70 uppercase tracking-widest font-bold">
+                  {cardData.subtitle}
+                </div>
+              )}
+              {cardData.treatmentLabel && (
+                <div
+                  className="text-[10px] mt-1 font-mono uppercase font-bold"
+                  style={{ color: `rgb(${cardData.glowColor})` }}
+                >
+                  {cardData.treatmentLabel}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Info Details */}
+          <div className="w-full space-y-4">
+            <div className="space-y-1">
+              <div
+                className="text-[10px] font-mono uppercase tracking-[0.2em]"
+                style={{ color: `rgba(${cardData.glowColor}, 0.6)` }}
+              >
+                Clasificación
+              </div>
+              <div className="text-lg font-bold text-white uppercase tracking-wider">{cardData.typeBadgeLabel}</div>
+            </div>
+
+            {cardData.subtitle && (
+              <div className="space-y-1">
+                <div
+                  className="text-[10px] font-mono uppercase tracking-[0.2em]"
+                  style={{ color: `rgba(${cardData.glowColor}, 0.6)` }}
+                >
+                  Sistema Objetivo
+                </div>
+                <div
+                  className="text-lg font-bold uppercase tracking-wider"
+                  style={{ color: `rgb(${cardData.glowColor})` }}
+                >
+                  {cardData.subtitle}
+                </div>
+              </div>
+            )}
+
+            {cardData.treatmentLabel && (
+              <div className="space-y-1">
+                <div
+                  className="text-[10px] font-mono uppercase tracking-[0.2em]"
+                  style={{ color: `rgba(${cardData.glowColor}, 0.6)` }}
+                >
+                  Efecto Especial
+                </div>
+                <div
+                  className="text-lg font-bold uppercase tracking-wider"
+                  style={{ color: `rgb(${cardData.glowColor})` }}
+                >
+                  {cardData.treatmentLabel}
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <div
+                className="text-[10px] font-mono uppercase tracking-[0.2em]"
+                style={{ color: `rgba(${cardData.glowColor}, 0.6)` }}
+              >
+                Descripción de la Misión
+              </div>
+              <div
+                className="bg-slate-900/50 rounded-xl p-4 text-sm text-gray-300 leading-relaxed italic"
+                style={{ border: `1px solid rgba(${cardData.glowColor}, 0.2)` }}
+              >
+                &ldquo;{cardData.cardDescription}&rdquo;
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={handleCloseModal}
+            className="w-full py-3 rounded-xl font-bold uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-[0.98]"
+            style={{
+              backgroundColor: `rgba(${cardData.glowColor}, 0.1)`,
+              border: `1px solid rgba(${cardData.glowColor}, 0.3)`,
+              color: `rgb(${cardData.glowColor})`,
+            }}
+          >
+            Entendido
           </button>
-        )}
-      </div>
-
-      {/* Contenido principal con sombra */}
-      <div className="flex flex-col items-center justify-center h-full pt-4 md:pt-6 relative z-10">
-        {/* Icono principal grande con brillo - REDUCIDO el tamaño */}
-        <div className="text-2xl md:text-4xl mb-1 drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] transition-transform group-hover:scale-110 duration-500">
-          {mainIcon}
         </div>
-
-        {/* Subtítulo (sistema que afecta) con fondo sutil */}
-        {subtitle && (
-          <div className="bg-black/20 backdrop-blur-sm px-1 md:px-2 py-0.5 rounded text-[6px] md:text-[8px] text-center text-gray-200 font-bold uppercase mt-0.5 tracking-tighter">
-            {subtitle}
-          </div>
-        )}
-
-        {/* Tratamiento especial si existe */}
-        {treatmentLabel && (
-          <div className="text-[7px] md:text-[8px] text-center px-1 md:px-2 mt-1 text-yellow-300 font-black leading-tight drop-shadow-md line-clamp-2 italic uppercase">
-            {treatmentLabel}
-          </div>
-        )}
-      </div>
-
-      {/* Indicador de arrastre más visual */}
-      {draggable && (
-        <div className="absolute bottom-1 right-1 flex gap-0.5 opacity-40">
-          <div className="w-0.5 h-0.5 bg-white rounded-full"></div>
-          <div className="w-0.5 h-0.5 bg-white rounded-full"></div>
-        </div>
-      )}
-    </div>
+      </Modal>
+    </>
   );
 }

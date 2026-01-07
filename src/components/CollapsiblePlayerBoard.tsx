@@ -33,6 +33,7 @@ export default function PlayerBoard({
   selectedColor,
   isDropTarget = false,
   targetColor,
+  validTargets,
   isSlotValid,
   selectedCard,
 }: PlayerBoardProps) {
@@ -45,7 +46,7 @@ export default function PlayerBoard({
       case Color.GREEN:
         return 'bg-emerald-900/80 border-emerald-500';
       case Color.YELLOW:
-        return 'bg-amber-900/80 border-amber-500';
+        return 'bg-yellow-600/80 border-yellow-400';
       case Color.MULTICOLOR:
         return 'bg-violet-900/80 border-violet-500';
       default:
@@ -87,6 +88,23 @@ export default function PlayerBoard({
     }
   };
 
+  const getStateBadgeStyle = (state: string): string => {
+    switch (state) {
+      case 'HEALTHY':
+        return 'bg-green-500/20 text-green-400 border border-green-500/30';
+      case 'INFECTED':
+        return 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 animate-pulse-slow';
+      case 'VACCINATED':
+        return 'bg-blue-500/20 text-blue-400 border border-blue-500/30';
+      case 'IMMUNIZED':
+        return 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30';
+      case 'REMOVED':
+        return 'bg-gray-500/20 text-gray-500 border border-gray-500/30';
+      default:
+        return 'bg-gray-500/10 text-gray-400 border border-gray-500/20';
+    }
+  };
+
   const handleDrop = (e: React.DragEvent, color: Color) => {
     e.preventDefault();
     e.stopPropagation();
@@ -104,109 +122,118 @@ export default function PlayerBoard({
   };
 
   const isValid = (color: Color): boolean => {
-    return isSlotValid ? isSlotValid(color) : false;
+    const targetKey = `${player.id}-${color}`;
+    const inValidTargets = validTargets?.has(targetKey);
+    const fallbackValid = isSlotValid ? isSlotValid(color) : false;
+
+    return inValidTargets || fallbackValid;
   };
 
   return (
     <div
       className={`
-        bg-gradient-to-br from-slate-800/90 to-gray-900/90 backdrop-blur-sm
-        rounded-2xl p-3 border border-slate-700/50 transition-all duration-300
+        relative rounded-2xl p-3 md:p-4
+        bg-gradient-to-b from-slate-900/70 to-slate-900/40
+        border border-white/10
         w-full max-w-lg mx-auto
-        ${isCurrentPlayer ? 'ring-2 ring-cyan-400 shadow-lg shadow-cyan-500/20 animate-pulse-glow' : ''}
-        ${isLocalPlayer ? 'ring-2 ring-emerald-500/50 shadow-lg shadow-emerald-500/10' : ''}
+        transition-all duration-300
+        ${isCurrentPlayer ? 'ring-2 ring-cyan-400 shadow-lg shadow-cyan-500/10' : ''}
       `}
     >
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="text-lg font-bold flex items-center gap-2">
-          <span className={`${isLocalPlayer ? 'text-emerald-400' : 'text-cyan-400'}`}>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span
+            className={`
+              text-sm md:text-base font-semibold
+              ${isLocalPlayer ? 'text-emerald-400' : 'text-slate-200'}
+            `}
+          >
             {player.name}
-            {isLocalPlayer && <span className="text-xs ml-1">(TÚ)</span>}
           </span>
-          {isCurrentPlayer && (
-            <span className="text-xs bg-cyan-500/20 text-cyan-300 px-2 py-1 rounded-full animate-pulse">
-              ACTIVO
-            </span>
+          {isLocalPlayer && (
+            <span className="text-[10px] text-emerald-500/80">TÚ</span>
           )}
-        </h3>
+        </div>
+
+        {isCurrentPlayer && (
+          <span className="text-[10px] bg-cyan-500/10 text-cyan-300 px-2 py-0.5 rounded-full border border-cyan-500/20">
+            Turno activo
+          </span>
+        )}
       </div>
 
-      <div className="grid grid-cols-5 gap-2">
+      {/* Slots */}
+      <div className="grid grid-cols-4 gap-2">
         {SLOT_COLORS.map((color) => {
-          const slot = player.body instanceof Map ? player.body.get(color) : player.body[color];
+          const slot =
+            player.body instanceof Map ? player.body.get(color) : player.body[color];
+          const isEmpty = !slot?.organCard;
           const state = slot ? getOrganState(slot) : 'REMOVED';
-          const isSelected = selectedColor === color;
-          const isTarget = isDropTarget && targetColor === color;
-          const valid = isValid(color);
-          const systemLabel = COLOR_SYSTEM_LABELS[color];
-          const stateLabel = ORGAN_STATE_LABELS[state];
-          const systemIcon = SYSTEM_ICONS[color];
-          const stateColor = getStateColor(state);
+          const selected = selectedColor === color;
+          const target = isDropTarget && targetColor === color;
+          const valid = selectedCard && isSlotValid ? isSlotValid(color) : false;
 
           return (
             <div
               key={color}
               onClick={() => onOrganClick(color)}
-              onDrop={(e) => handleDrop(e, color)}
-              onDragOver={handleDragOver}
+              onDrop={(e) => onDrop ? onDrop(color, player) : undefined}
+              onDragOver={onDragOver}
               className={`
+                relative h-24 rounded-xl
+                flex flex-col items-center justify-center
+                border border-white/10
+                transition-all duration-200
+                ${isEmpty ? 'grayscale opacity-40' : ''}
+                ${selected ? 'ring-2 ring-white' : ''}
+                ${target ? 'ring-2 ring-cyan-400' : ''}
+                ${valid ? 'ring-2 ring-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.8)]' : ''}
+                ${selectedCard && !valid ? 'opacity-40 grayscale' : ''}
                 ${getSystemColor(color)}
-                ${getStateOverlay(state)}
-                ${isSelected ? 'ring-2 ring-white scale-105 z-10 shadow-xl' : ''}
-                ${isTarget ? 'ring-4 ring-cyan-400 scale-110 shadow-lg shadow-cyan-500/50 z-20' : ''}
-                ${selectedCard && valid ? 'ring-2 ring-green-400 shadow-[0_0_10px_rgba(74,222,128,0.3)] animate-pulse' : ''}
-                ${selectedCard && !valid ? 'opacity-30 grayscale scale-95' : ''}
-                border-2 rounded-xl p-2 h-32 flex flex-col items-center justify-center
-                cursor-pointer transition-all duration-300 hover:scale-105
-                relative overflow-hidden group/slot scanner-effect
+                hover:bg-white/5
               `}
             >
-              {selectedCard && valid && (
-                <div className="absolute top-1 right-1 flex gap-1 z-10">
-                  <div className="w-1 h-1 bg-green-400 rounded-full animate-ping"></div>
-                  <div className="w-1 h-1 bg-green-400 rounded-full"></div>
-                </div>
-              )}
+              {/* Icono */}
+              <div className="text-2xl md:text-3xl">{SYSTEM_ICONS[color]}</div>
 
-              <div className="text-3xl mb-1 drop-shadow-md relative z-10 group-hover/slot:scale-110 transition-transform duration-500">{systemIcon}</div>
-
-              <div className="text-[9px] font-black text-white uppercase tracking-widest relative z-10 opacity-70">
-                {systemLabel}
+              {/* Label sistema */}
+              <div className="text-[9px] text-white/60 uppercase mt-1">
+                {COLOR_SYSTEM_LABELS[color]}
               </div>
 
+              {/* Estado + contadores */}
               {slot?.organCard ? (
-                <div className="text-center relative z-10 mt-1">
-                  <div className={`text-[9px] font-bold px-1 rounded-full inline-block bg-black/30 ${stateColor}`}>
-                    {stateLabel}
+                <div className="mt-2 flex flex-col items-center gap-1">
+                  <div
+                    className={`
+                      text-[9px] font-bold px-2 py-0.5 rounded-full
+                      ${getStateBadgeStyle(state)}
+                    `}
+                  >
+                    {ORGAN_STATE_LABELS[state]}
                   </div>
-                  {(slot.virusCards.length > 0 || slot.medicineCards.length > 0) && (
-                    <div className="flex gap-1 justify-center mt-1">
-                      {slot.virusCards.length > 0 && (
-                        <div className="bg-red-500/20 px-1 rounded text-[8px] text-red-300 font-bold border border-red-500/30">
-                          ⚠{slot.virusCards.length}
-                        </div>
-                      )}
-                      {slot.medicineCards.length > 0 && (
-                        <div className="bg-cyan-500/20 px-1 rounded text-[8px] text-cyan-300 font-bold border border-cyan-500/30">
-                          🛡{slot.medicineCards.length}
-                        </div>
-                      )}
-                    </div>
-                  )}
+
+                  <div className="flex gap-1">
+                    {slot.virusCards.length > 0 && (
+                      <span className="text-[8px] bg-red-500/20 text-red-300 px-1 rounded">
+                        ⚠ {slot.virusCards.length}
+                      </span>
+                    )}
+                    {slot.medicineCards.length > 0 && (
+                      <span className="text-[8px] bg-cyan-500/20 text-cyan-300 px-1 rounded">
+                        🛡 {slot.medicineCards.length}
+                      </span>
+                    )}
+                  </div>
                 </div>
               ) : (
-                <div className="text-center relative z-10 mt-1 opacity-30">
-                  <div className="text-xl filter grayscale">✖</div>
-                  <div className="text-[7px] text-gray-400 font-black mt-0.5 tracking-tighter">DESTROYED</div>
-                </div>
+                <div className="mt-2 text-[9px] text-white/30">Vacío</div>
               )}
-
-              {/* Borde interior sutil */}
-              <div className="absolute inset-px border border-white/5 rounded-[10px] pointer-events-none" />
             </div>
           );
         })}
       </div>
-    </div>
+    </div >
   );
 }

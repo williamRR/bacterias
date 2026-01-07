@@ -1,6 +1,7 @@
 import { GameState, Player, Color, Card, OrganState, CardType, OrganSlot } from './types';
 import { getOrganState } from './validation';
 import { getBodySlots, serializeBody, isMapBody, initializeEmptySlot, COLORS } from './body-utils';
+import { createDeck, shuffleDeck } from './deck';
 
 function checkVictoryCondition(player: Player): boolean {
   const slots = getBodySlots(player.body);
@@ -83,8 +84,11 @@ function initializeGame(gameState: GameState): void {
   gameState.gameStarted = true;
   gameState.gameEnded = false;
   gameState.currentPlayerIndex = 0;
+  gameState.discardPile = [];
+  gameState.deck = shuffleDeck(createDeck());
 
   gameState.players.forEach((player) => {
+    player.hand = [];
     const body = player.body;
     if (isMapBody(body)) {
       body.clear();

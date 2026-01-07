@@ -2,6 +2,7 @@ import { GameState, Player, Card, Color } from '../game/types';
 import { createDeck, shuffleDeck, dealCards } from '../game/deck';
 import { OrganSlot } from '../game/types';
 import { initializeGame } from '../game/engine';
+import { getGameLogger, removeGameLogger } from './logger';
 
 interface Room {
   id: string;
@@ -38,17 +39,35 @@ function createRoom(roomId: string, playerId: string, playerName: string): Room 
   room.players.set(playerId, player);
 
   rooms.set(roomId, room);
+  getGameLogger(roomId).logPlayerJoined(playerName, playerId);
   return room;
 }
 
-function joinRoom(roomId: string, playerId: string, playerName: string): Room | null {
+function joinRoom(roomId: string, playerId: string, playerName: string): Room | { error: string; reason: string } | null {
   const room = rooms.get(roomId);
   if (!room) {
     return null;
   }
 
+  // Si el jugador ya está en la sala, es una reconexión - retornar la sala sin modificar
+  // La lógica de eliminación de la sesión antigua se maneja en server.ts
+  if (room.players.has(playerId)) {
+    return room;
+  }
+
+  // No permitir unirse si el juego ya está en curso (nuevos jugadores)
+  if (room.gameState.gameStarted) {
+    return {
+      error: 'game_already_started',
+      reason: 'La partida ya está en curso'
+    };
+  }
+
   if (room.players.size >= 4) {
-    return null;
+    return {
+      error: 'room_full',
+      reason: 'La sala está llena'
+    };
   }
 
   const player: Player = {
@@ -60,23 +79,12 @@ function joinRoom(roomId: string, playerId: string, playerName: string): Room | 
 
   room.players.set(playerId, player);
 
-  // Si el juego ya está en curso, agregar el jugador al gameState también
-  if (room.gameState.gameStarted) {
-    console.log(`Joining in-progress game. Adding player ${playerName} to gameState`);
-    room.gameState.players.push(player);
-
-    // Dar cartas al nuevo jugador desde el mazo existente
-    const cardsToDeal = Math.min(3, room.gameState.deck.length);
-    for (let i = 0; i < cardsToDeal; i++) {
-      player.hand.push(room.gameState.deck.pop()!);
-    }
-    console.log(`Player ${playerName} joined in-progress game with ${player.hand.length} cards from existing deck`);
-  }
-
   // Limpiar emptySince si la sala estaba vacía
   if (room.emptySince !== undefined) {
     delete room.emptySince;
   }
+
+  getGameLogger(roomId).logPlayerJoined(playerName, playerId);
   return room;
 }
 
@@ -93,18 +101,10 @@ function startGame(roomId: string): boolean {
   const deck = shuffleDeck(createDeck());
   const { deck: remainingDeck, playerHands } = dealCards(deck, room.players.size, 3);
 
-  console.log('=== START GAME ===');
-  console.log('Room ID:', roomId);
-  console.log('Players:', room.players.size);
-  console.log('Player hands:', playerHands.map(h => h.length));
-
+  const logger = getGameLogger(roomId);
   const players = Array.from(room.players.values());
   players.forEach((player, index) => {
     player.hand = playerHands[index];
-    console.log(`Player ${index} (${player.name}): ${player.hand.length} cards`);
-    player.hand.forEach(card => {
-      console.log(`  - ${card.type} ${card.color} (${card.id})`);
-    });
   });
 
   room.gameState.players = players;
@@ -113,10 +113,7 @@ function startGame(roomId: string): boolean {
   // Inicializar el juego (configura turnos y reparte cartas iniciales)
   initializeGame(room.gameState);
 
-  console.log('After initializeGame:');
-  room.gameState.players.forEach((player, index) => {
-    console.log(`Player ${index} (${player.name}): ${player.hand.length} cards in hand`);
-  });
+  logger.logGameStarted();
 
   return true;
 }
@@ -127,6 +124,7 @@ function getRoom(roomId: string): Room | undefined {
 
 function deleteRoom(roomId: string): void {
   rooms.delete(roomId);
+  removeGameLogger(roomId);
 }
 
 function getRoomPlayers(roomId: string): Player[] {
@@ -139,12 +137,15 @@ function deletePlayerFromRoom(playerId: string): void {
   const roomsArray = Array.from(rooms.entries());
   for (const [roomId, room] of roomsArray) {
     if (room.players.has(playerId)) {
-      console.log(`Eliminando jugador ${playerId} de la sala ${roomId}`);
+      const logger = getGameLogger(roomId);
+      const player = room.players.get(playerId);
+      const playerName = player?.name || playerId;
+
       room.players.delete(playerId);
+      logger.logPlayerLeft(playerName, playerId);
 
       // Si la sala se queda vacía, marcarla para eliminación después de 5 minutos
       if (room.players.size === 0) {
-        console.log(`Sala ${roomId} vacía, marcando para eliminación futura`);
         room.emptySince = Date.now();
         // Programar eliminación después de 5 minutos (300000 ms)
         setTimeout(() => {
@@ -152,8 +153,8 @@ function deletePlayerFromRoom(playerId: string): void {
           if (currentRoom && currentRoom.emptySince && currentRoom.players.size === 0) {
             const timeSinceEmpty = Date.now() - currentRoom.emptySince;
             if (timeSinceEmpty >= 300000) {
-              console.log(`Sala ${roomId} eliminada después de 5 minutos vacía`);
               rooms.delete(roomId);
+              removeGameLogger(roomId);
             }
           }
         }, 300000);

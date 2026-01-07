@@ -51,50 +51,68 @@ app.prepare().then(() => {
 
   const io = new ServerIO(httpServer, {
     addTrailingSlash: false,
+    cors: {
+      origin: '*',
+      methods: ['GET', 'POST'],
+      credentials: true,
+    },
   });
 
   setIOInstance(io);
 
   io.on('connection', (socket) => {
-    console.log(`=== CLIENTE CONECTADO: ${socket.id} ===`);
-
-    socket.on('create-room', ({ playerName }) => {
-      const roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
-      createRoom(roomId, socket.id, playerName);
-      socket.join(roomId);
-      socket.emit('room-created', { roomId, playerId: socket.id });
+    // Guardar el browserId en el socket para usarlo en eventos futuros
+    socket.on('register-browser-id', ({ browserId }) => {
+      (socket as any).browserId = browserId;
     });
 
-    socket.on('join-room', ({ roomId, playerName }) => {
-      console.log(`=== JOIN ROOM ===`);
-      console.log('Room ID:', roomId);
-      console.log('Player Name:', playerName);
-      console.log('Socket ID:', socket.id);
+    socket.on('create-room', ({ playerName, browserId }) => {
+      const roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+      (socket as any).browserId = browserId; // Guardar browserId
+      createRoom(roomId, browserId || socket.id, playerName);
+      socket.join(roomId);
+      socket.emit('room-created', { roomId, playerId: browserId || socket.id });
+    });
 
-      const room = joinRoom(roomId, socket.id, playerName);
-      if (room) {
-        console.log('Room found, joining...');
+    socket.on('join-room', ({ roomId, playerName, browserId }) => {
+      const playerId = browserId || socket.id;
+      (socket as any).browserId = playerId; // Guardar browserId
+
+      // Verificar si el jugador ya está en la sala (reconexión)
+      const room = getRoom(roomId);
+      const isReconnecting = room && room.players.has(playerId);
+
+      if (isReconnecting) {
+        // No hacer nada más, el jugador ya está en la sala con sus datos
         socket.join(roomId);
 
-        // Si el juego ya está en curso, enviar el estado actual
+        // Enviar el estado actual del juego
         if (room.gameState.gameStarted) {
-          console.log('Game already in progress, sending current state');
           const { serializeGameState } = require('./src/server/game-manager');
-          io.to(roomId).emit('player-joined', { playerId: socket.id, playerName, players: getRoomPlayers(roomId) });
-          socket.emit('room-joined', { roomId, playerId: socket.id, players: getRoomPlayers(roomId) });
-          // Enviar el estado del juego inmediatamente
-          socket.emit('game-started', { gameState: serializeGameState(room.gameState) });
-          // También emitir game-state para asegurar que tienen el estado más reciente
-          io.to(roomId).emit('game-state', serializeGameState(room.gameState));
-        } else {
-          // Juego no iniciado, comportamiento normal
-          io.to(roomId).emit('player-joined', { playerId: socket.id, playerName, players: getRoomPlayers(roomId) });
-          socket.emit('room-joined', { roomId, playerId: socket.id, players: getRoomPlayers(roomId) });
+          socket.emit('game-started', { gameState: serializeGameState(room.gameState), reconnected: true });
         }
-        console.log('Emitted room-joined event');
+
+        socket.emit('room-joined', { roomId, playerId, players: getRoomPlayers(roomId), reconnected: true });
+        return;
+      }
+
+      const result = joinRoom(roomId, playerId, playerName);
+
+      // Manejar errores específicos
+      if (result && 'error' in result) {
+        socket.emit('join-error', { error: result.error, message: result.reason });
+        return;
+      }
+
+      const joinedRoom = result;
+      if (joinedRoom) {
+        socket.join(roomId);
+
+        // Juego no iniciado, comportamiento normal
+        io.to(roomId).emit('player-joined', { playerId, playerName, players: getRoomPlayers(roomId) });
+        socket.emit('room-joined', { roomId, playerId, players: getRoomPlayers(roomId) });
       } else {
-        console.log('Room not found or full');
-        socket.emit('error', { message: 'No se pudo unir a la sala' });
+        socket.emit('join-error', { error: 'room_not_found', message: 'Sala no encontrada' });
       }
     });
 
@@ -117,16 +135,18 @@ app.prepare().then(() => {
     });
 
     socket.on('restart-game', ({ roomId }) => {
+      const playerId = (socket as any).browserId || socket.id;
       // Enviar la acción de reiniciar juego al game manager
-      handleGameAction(roomId, socket.id, { type: 'restart-game' });
+      console.log('restarting')
+      handleGameAction(roomId, playerId, { type: 'restart-game' });
     });
 
     socket.on('game-action', ({ roomId, action }) => {
-      handleGameAction(roomId, socket.id, action);
+      const playerId = (socket as any).browserId || socket.id;
+      handleGameAction(roomId, playerId, action);
     });
 
     socket.on('disconnect', () => {
-      console.log(`Cliente desconectado: ${socket.id}`);
       // Eliminar al jugador de todas las salas donde esté
       const { deletePlayerFromRoom } = require('./src/server/rooms');
       deletePlayerFromRoom(socket.id);

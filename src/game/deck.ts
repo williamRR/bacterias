@@ -8,17 +8,24 @@ const CARD_CONFIG = {
 } as const;
 
 const TREATMENT_CARDS = [
-  TreatmentType.TRANSPLANT,
-  TreatmentType.TRANSPLANT,
-  TreatmentType.TRANSPLANT,
-  TreatmentType.ORGAN_THIEF,
-  TreatmentType.ORGAN_THIEF,
-  TreatmentType.ORGAN_THIEF,
-  TreatmentType.LATEX_GLOVE,
-  TreatmentType.LATEX_GLOVE,
-  TreatmentType.MEDICAL_ERROR,
-  TreatmentType.MEDICAL_ERROR,
-  TreatmentType.MEDICAL_ERROR,
+  TreatmentType.ENERGY_TRANSFER,
+  TreatmentType.ENERGY_TRANSFER,
+  TreatmentType.EMERGENCY_DECOMPRESSION,
+  TreatmentType.EMERGENCY_DECOMPRESSION,
+  TreatmentType.DATA_PIRACY,
+  TreatmentType.DATA_PIRACY,
+  TreatmentType.DATA_PIRACY,
+  TreatmentType.QUANTUM_DESYNC,
+  TreatmentType.QUANTUM_DESYNC,
+  TreatmentType.PROTOCOL_ERROR,
+  TreatmentType.PROTOCOL_ERROR,
+  TreatmentType.PROTOCOL_ERROR,
+  TreatmentType.SINGULARITY,
+  TreatmentType.SINGULARITY,
+  TreatmentType.EVENT_HORIZON,
+  TreatmentType.EVENT_HORIZON,
+  TreatmentType.BACKUP_SYSTEM,      // Nueva carta de comeback
+  TreatmentType.BACKUP_SYSTEM,      // 2 copias para que sea accesible
 ] as const;
 
 function createDeck(): Card[] {

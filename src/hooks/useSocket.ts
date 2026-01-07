@@ -43,7 +43,9 @@ export function useSocket({
       return;
     }
 
-    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_SERVER_URL || undefined;
+    // Usar el host actual para permitir conexiones remotas (tailnet, etc)
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_SERVER_URL ||
+                      (typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.hostname}:${window.location.port}` : undefined);
     const newSocket = io(socketUrl, {
       autoConnect: false,
       transports: ['websocket', 'polling'],

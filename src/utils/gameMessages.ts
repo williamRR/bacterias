@@ -1,6 +1,6 @@
 import { Card, Color, Player } from '@/game/types';
 import { TreatmentType } from '@/game/types';
-import { COLOR_SYSTEM_LABELS } from '@/game/theme';
+import { COLOR_SYSTEM_LABELS, TREATMENT_LABELS } from '@/game/theme';
 
 export function getCardActionMessage(
   card: Card,
@@ -37,29 +37,47 @@ export function getCardActionMessage(
 
   if (card.type === 'TREATMENT' && card.treatmentType) {
     switch (card.treatmentType) {
-      case TreatmentType.TRANSPLANT:
+      case TreatmentType.ENERGY_TRANSFER:
         return {
           type: 'success',
-          message: `¡Intercambio de ${systemName} completado con ${targetPlayer.name}!`,
-          logMessage: `Jugaste una carta de INTERCAMBIO con ${targetPlayer.name}`
+          message: `Transferencia de energía en ${systemName}`,
+          logMessage: `Jugaste TRANSFERENCIA DE ENERGÍA en ${systemName}`
         };
-      case TreatmentType.ORGAN_THIEF:
-        return {
-          type: 'success',
-          message: `¡${systemName} robado de ${targetPlayer.name}!`,
-          logMessage: `Jugaste una carta de ROBO de ${systemName} de ${targetPlayer.name}`
-        };
-      case TreatmentType.LATEX_GLOVE:
-        return {
-          type: 'info',
-          message: `Interferencia electromagnética: cartas descartadas de oponentes`,
-          logMessage: `Jugaste una carta de GUANTE DE LÁTEX`
-        };
-      case TreatmentType.MEDICAL_ERROR:
+      case TreatmentType.EMERGENCY_DECOMPRESSION:
         return {
           type: 'warning',
-          message: `¡Fallo de teletransporte! Cuerpos intercambiados con ${targetPlayer.name}`,
-          logMessage: `Jugaste una carta de FALLO DE TELETRANSPORTE con ${targetPlayer.name}`
+          message: `¡Descompresión de emergencia en ${systemName} de ${targetPlayer.name}!`,
+          logMessage: `Jugaste DESCOMPRESIÓN DE EMERGENCIA en ${systemName} de ${targetPlayer.name}`
+        };
+      case TreatmentType.DATA_PIRACY:
+        return {
+          type: 'success',
+          message: `¡${systemName} pirateado de ${targetPlayer.name}!`,
+          logMessage: `Jugaste PIRATERÍA DE DATOS de ${systemName} de ${targetPlayer.name}`
+        };
+      case TreatmentType.QUANTUM_DESYNC:
+        return {
+          type: 'info',
+          message: `Desincronización cuántica en ${targetPlayer.name}`,
+          logMessage: `Jugaste DESINCRONIZACIÓN CUÁNTICA en ${targetPlayer.name}`
+        };
+      case TreatmentType.PROTOCOL_ERROR:
+        return {
+          type: 'success',
+          message: `Error de protocolo en ${systemName} de ${targetPlayer.name}`,
+          logMessage: `Jugaste ERROR DE PROTOCOLO en ${systemName} de ${targetPlayer.name}`
+        };
+      case TreatmentType.SINGULARITY:
+        return {
+          type: 'warning',
+          message: `¡SINGULARIDAD activada!`,
+          logMessage: `Jugaste SINGULARIDAD`
+        };
+      case TreatmentType.EVENT_HORIZON:
+        return {
+          type: 'info',
+          message: `Horizonte de sucesos activado`,
+          logMessage: `Jugaste HORIZONTE DE SUCESOS`
         };
     }
   }

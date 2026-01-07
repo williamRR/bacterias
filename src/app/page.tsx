@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { GAME_THEME, UI_LABELS } from '@/game/theme';
+import TourButton from '@/components/tour/TourButton';
 
 export default function Home() {
   const [roomCode, setRoomCode] = useState('');
@@ -18,7 +19,7 @@ export default function Home() {
 
       <div className="max-w-2xl mx-auto text-center relative z-10">
         {/* Logo/Título principal */}
-        <div className="mb-12">
+        <div className="mb-12" id="tour-home-title">
           <div className="text-8xl mb-6 animate-bounce"></div>
           <h1 className="text-5xl md:text-6xl font-bold mb-4 neon-glow text-cyan-400">
             {GAME_THEME.title}
@@ -35,6 +36,7 @@ export default function Home() {
             <a
               href="/create-room"
               className="block w-full btn-space px-8 py-4 rounded-xl font-bold text-lg transition-all hover:scale-105"
+              id="tour-create-room"
             >
               🚀 Crear Nuevo Sector
             </a>
@@ -56,11 +58,13 @@ export default function Home() {
                 onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
                 className="flex-1 bg-slate-800/50 px-4 py-3 rounded-xl border border-cyan-500/30 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 text-center font-mono text-lg uppercase"
                 maxLength={6}
+                id="tour-room-input"
               />
               <button
                 onClick={handleJoin}
                 disabled={!roomCode.trim()}
                 className="btn-space px-8 py-3 rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105 whitespace-nowrap"
+                id="tour-join-button"
               >
                 Unirse al Sector
               </button>
@@ -69,7 +73,10 @@ export default function Home() {
         </div>
 
         {/* Instrucciones rápidas */}
-        <div className="bg-slate-800/30 backdrop-blur-sm rounded-xl p-6 border border-cyan-500/20">
+        <div
+          className="bg-slate-800/30 backdrop-blur-sm rounded-xl p-6 border border-cyan-500/20"
+          id="tour-game-instructions"
+        >
           <h3 className="text-lg font-bold mb-3 text-cyan-300">Cómo Jugar</h3>
           <div className="text-left text-sm text-gray-300 space-y-2">
             <p>🎯 <strong>Objetivo:</strong> Completa los 4 Sistemas Críticos de tu nave</p>
@@ -80,6 +87,9 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Tour Button */}
+      <TourButton tourType="home" />
     </main>
   );
 }

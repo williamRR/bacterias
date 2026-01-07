@@ -41,7 +41,7 @@ export function useGameState({ gameState, currentPlayerId }: UseGameStateProps):
       setValidTargets(new Set());
     }
 
-    if (card.type === 'TREATMENT' && card.treatmentType === TreatmentType.MEDICAL_ERROR) {
+    if (card.type === 'TREATMENT' && card.treatmentType === TreatmentType.SINGULARITY) {
       setSelectingPlayerForMedicalError(true);
       setSelectedCard(card);
       setSelectedCards([card]);
@@ -49,7 +49,7 @@ export function useGameState({ gameState, currentPlayerId }: UseGameStateProps):
       return;
     }
 
-    if (card.type === 'TREATMENT' && card.treatmentType === TreatmentType.TRANSPLANT) {
+    if (card.type === 'TREATMENT' && card.treatmentType === TreatmentType.ENERGY_TRANSFER) {
       setTransplantStep(1);
       setSelectedCard(card);
       setSelectedCards([card]);

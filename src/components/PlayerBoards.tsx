@@ -13,7 +13,7 @@ interface PlayerBoardsProps {
   handleOrganClick: (color: Color, player: Player) => void;
   handleDropCard: (color: Color, player: Player) => void;
   handleDragOver: (e: React.DragEvent) => void;
-  isSlotValid: (color: Color) => boolean;
+  isSlotValid: (playerId: string, color: Color) => boolean;
 }
 
 export default function PlayerBoards({
@@ -35,9 +35,9 @@ export default function PlayerBoards({
   return (
     <>
       {/* Mobile: horizontal scroll of compact boards (now centered if few) */}
-      <div className="md:hidden flex gap-3 overflow-x-auto pb-2 justify-center">
+      <div className="md:hidden flex gap-2 md:gap-4 overflow-x-auto pb-2 md:pb-4 snap-x snap-mandatory scroll-smooth justify-center">
         {others.map(player => (
-          <div key={player.id} className="min-w-[220px] flex-none">
+          <div key={player.id} className="min-w-[260px] md:min-w-[280px] flex-none snap-center">
             <PlayerBoard
               player={player}
               isCurrentPlayer={player.id === currentPlayer?.id}
@@ -48,17 +48,18 @@ export default function PlayerBoards({
               selectedColor={null}
               isDropTarget={isDragging}
               targetColor={dragTargetColor}
-              isSlotValid={(color) => isSlotValid(color)}
+              validTargets={validTargets}
+              isSlotValid={(color) => isSlotValid(player.id, color)}
               selectedCard={selectedCard}
             />
           </div>
         ))}
       </div>
 
-      {/* Desktop/tablet: grid layout centered */}
-      <div className={`hidden md:grid gap-4 justify-center items-start mb-6 w-full ${others.length === 1 ? 'grid-cols-1' : others.length === 2 ? 'grid-cols-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}`}>
+      {/* Desktop/tablet: smarter grid layout centered */}
+      <div className="hidden md:flex flex-wrap gap-6 justify-center items-start mb-8 w-full max-w-6xl mx-auto">
         {others.map(player => (
-          <div key={player.id} className="w-full max-w-lg">
+          <div key={player.id} className={`w-full ${others.length === 1 ? 'max-w-2xl' : 'max-w-md'} transition-all duration-300`}>
             <PlayerBoard
               player={player}
               isCurrentPlayer={player.id === currentPlayer?.id}
@@ -69,7 +70,8 @@ export default function PlayerBoards({
               selectedColor={null}
               isDropTarget={isDragging}
               targetColor={dragTargetColor}
-              isSlotValid={(color) => isSlotValid(color)}
+              validTargets={validTargets}
+              isSlotValid={(color) => isSlotValid(player.id, color)}
               selectedCard={selectedCard}
             />
           </div>

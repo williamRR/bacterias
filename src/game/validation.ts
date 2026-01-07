@@ -69,38 +69,107 @@ function canPlayMedicine(card: Card, targetPlayer: Player, targetColor: Color): 
   return card.color === targetColor;
 }
 
-function canPlayTreatment(card: Card, gameState: any, currentPlayer: Player, targetPlayer: Player): boolean {
+function canPlayTreatment(card: Card, gameState: any, currentPlayer: Player, targetPlayer: Player, targetColor?: Color, sourceColor?: Color, sourcePlayerId?: string): boolean {
   if (card.type !== CardType.TREATMENT || !card.treatmentType) {
     return false;
   }
 
   switch (card.treatmentType) {
-    case TreatmentType.TRANSPLANT:
-      // TRANSPLANT requiere un objetivo válido (otro jugador o el mismo jugador con órganos)
-      return getBodySlots(targetPlayer.body).some(slot =>
-        slot.organCard && getOrganState(slot) !== OrganState.IMMUNIZED
-      );
+    case TreatmentType.ENERGY_TRANSFER: {
+      // ENERGY_TRANSFER requiere sourceColor y targetColor válidos
+      if (!targetColor) return false;
+      const srcColor = sourceColor || targetColor;
 
-    case TreatmentType.ORGAN_THIEF:
-      // ORGAN_THIEF requiere que el jugador NO tenga el sistema y que el objetivo sí lo tenga
-      return gameState.players.some((p: Player) => p.id !== currentPlayer.id && getBodySlots(p.body).some(slot =>
-        slot.organCard && getOrganState(slot) !== OrganState.IMMUNIZED
-      ));
+      // Obtener el jugador fuente correcto
+      const sourcePlayer = sourcePlayerId ? gameState.players.find((p: Player) => p.id === sourcePlayerId) : targetPlayer;
+      if (!sourcePlayer) return false;
 
-    case TreatmentType.LATEX_GLOVE:
-      // LATEX_GLOVE requiere que haya oponentes con cartas
+      const sourceSlot = getSlotFromBody(sourcePlayer.body, srcColor);
+      const destSlot = getSlotFromBody(currentPlayer.body, targetColor);
+
+      if (!sourceSlot || !destSlot) return false;
+
+      // Debe haber al menos un virus o medicina en el origen
+      const hasVirus = sourceSlot.virusCards.length > 0;
+      const hasMedicine = sourceSlot.medicineCards.length > 0;
+      if (!hasVirus && !hasMedicine) return false;
+
+      // Si hay medicina en el origen, el destino no puede tener ya 2 medicinas
+      if (hasMedicine && destSlot.medicineCards.length >= 2) return false;
+
+      // No puede ser el mismo slot
+      const isSameSlot = sourcePlayer.id === currentPlayer.id && srcColor === targetColor;
+
+      return !isSameSlot;
+    }
+
+    case TreatmentType.EMERGENCY_DECOMPRESSION: {
+      // EMERGENCY_DECOMPRESSION requiere que el objetivo tenga un sistema
+      if (!targetColor) return false;
+      const targetSlot = getSlotFromBody(targetPlayer.body, targetColor);
+      return targetSlot?.organCard !== undefined;
+    }
+
+    case TreatmentType.DATA_PIRACY: {
+      // DATA_PIRACY requiere que el jugador NO tenga el sistema y que el objetivo sí lo tenga
+      if (!targetColor) return false;
+      const playerSlot = getSlotFromBody(currentPlayer.body, targetColor);
+      const targetSlot = getSlotFromBody(targetPlayer.body, targetColor);
+
+      if (!targetSlot?.organCard) return false;
+      if (playerSlot?.organCard) return false;
+
+      return getOrganState(targetSlot) !== OrganState.IMMUNIZED;
+    }
+
+    case TreatmentType.QUANTUM_DESYNC: {
+      // QUANTUM_DESYNC requiere que el objetivo tenga cartas en su mano
+      return targetPlayer.hand.length > 0;
+    }
+
+    case TreatmentType.PROTOCOL_ERROR: {
+      // PROTOCOL_ERROR requiere que el jugador tenga cartas en su mano
+      // y que el objetivo tenga un virus en el sistema
+      if (!targetColor) return false;
+      if (currentPlayer.hand.length === 0) return false;
+
+      const targetSlot = getSlotFromBody(targetPlayer.body, targetColor);
+      return (targetSlot?.virusCards.length ?? 0) > 0;
+    }
+
+    case TreatmentType.SINGULARITY: {
+      // SINGULARITY requiere al menos 2 jugadores en total (para intercambiar sus cuerpos)
+      return gameState.players.length >= 2;
+    }
+
+    case TreatmentType.EVENT_HORIZON: {
+      // EVENT_HORIZON requiere que haya oponentes con cartas
       return gameState.players.some((p: Player) => p.id !== currentPlayer.id && p.hand.length > 0);
+    }
 
-    case TreatmentType.MEDICAL_ERROR:
-      // MEDICAL_ERROR requiere al menos un oponente
-      return gameState.players.some((p: Player) => p.id !== currentPlayer.id);
+    case TreatmentType.BACKUP_SYSTEM: {
+      // BACKUP_SYSTEM requiere:
+      // 1. El slot del jugador debe estar vacío (sin órgano)
+      // 2. Debe haber un órgano del color correcto en el descarte
+      if (!targetColor) return false;
+      const playerSlot = getSlotFromBody(currentPlayer.body, targetColor);
+
+      // Solo puede recuperar en slots vacíos
+      if (playerSlot?.organCard) return false;
+
+      // Verificar que haya un órgano del color correcto en el descarte
+      return gameState.discardPile.some((c: Card) =>
+        c.type === CardType.ORGAN &&
+        (c.color === targetColor || c.color === Color.MULTICOLOR)
+      );
+    }
 
     default:
       return false;
   }
 }
 
-function canPlayCard(card: Card, currentPlayer: Player, targetPlayer: Player, targetColor: Color, gameState: any): boolean {
+function canPlayCard(card: Card, currentPlayer: Player, targetPlayer: Player, targetColor: Color, gameState: any, sourceColor?: Color, sourcePlayerId?: string): boolean {
   switch (card.type) {
     case CardType.ORGAN:
       return canPlayOrgan(card, targetPlayer, targetColor);
@@ -109,7 +178,7 @@ function canPlayCard(card: Card, currentPlayer: Player, targetPlayer: Player, ta
     case CardType.MEDICINE:
       return canPlayMedicine(card, targetPlayer, targetColor);
     case CardType.TREATMENT:
-      return canPlayTreatment(card, gameState, currentPlayer, targetPlayer);
+      return canPlayTreatment(card, gameState, currentPlayer, targetPlayer, targetColor, sourceColor, sourcePlayerId);
     default:
       return false;
   }

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 interface RoomHeaderProps {
   title: string;
@@ -17,21 +17,43 @@ export default function RoomHeader({
   actionsThisTurn,
   uiLabels,
 }: RoomHeaderProps) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(roomId);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Error al copiar:', err);
+    }
+  };
+
   return (
-    <div className="action-panel rounded-xl p-2 md:p-4 mb-4 md:mb-6">
-      <div className="flex flex-col md:flex-row justify-between items-center gap-2 md:gap-4">
-        <div className="flex items-center gap-2 md:gap-4 w-full md:w-auto">
-          <div className="flex-1 md:flex-none">
-            <h1 className="text-lg md:text-2xl font-bold neon-glow text-cyan-400">{title}</h1>
-            <div className="text-xs md:text-sm text-gray-400">{uiLabels.room}: {roomId}</div>
+    <div className="action-panel rounded-lg p-1.5 md:p-3 mb-2 md:mb-4 shrink-0 overflow-hidden relative">
+      <div className="flex flex-col md:flex-row justify-between items-start gap-2 md:gap-3">
+        <div className="flex items-center gap-1.5 md:gap-3 w-full md:w-auto min-w-0">
+          <div className="min-w-0 flex-1 md:flex-none">
+            <h1 className="font-bold neon-glow text-cyan-400 truncate" style={{ fontSize: 'clamp(0.875rem, 3vw, 1.25rem)' }}>
+              {title}
+            </h1>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <div className="text-[10px] md:text-xs text-gray-400 uppercase tracking-widest truncate">{uiLabels.room}: {roomId}</div>
+              <button
+                onClick={handleCopy}
+                className={`text-[8px] md:text-[10px] px-1.5 py-0.5 rounded transition-all border whitespace-nowrap ${copied ? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20 hover:bg-cyan-500/20'}`}
+              >
+                {copied ? '¡COPIADO!' : '📋 COPIAR'}
+              </button>
+            </div>
           </div>
         </div>
-        <div className="flex flex-col items-end gap-1 md:gap-2 w-full md:w-auto">
-          <div className={`px-3 md:px-4 py-1 md:py-2 rounded-full font-bold text-xs md:text-sm ${isCurrentPlayer ? 'bg-cyan-500/20 text-cyan-300 animate-pulse' : 'bg-gray-700 text-gray-300'}`}>
+        <div className="flex flex-col items-end gap-0.5 md:gap-1 w-full md:w-auto shrink-0">
+          <div className={`px-2 md:px-3 py-0.5 md:py-1 rounded-full font-bold text-[10px] md:text-xs whitespace-nowrap ${isCurrentPlayer ? 'bg-cyan-500/20 text-cyan-300 animate-pulse border border-cyan-500/30' : 'bg-gray-700/50 text-gray-300 border border-gray-600/30'}`}>
             {isCurrentPlayer ? `${uiLabels.yourTurn}` : `${uiLabels.turnOf}: ${currentPlayerName}`}
           </div>
           {isCurrentPlayer && (
-            <div className="text-xs text-gray-400">
+            <div className="text-[10px] md:text-xs text-gray-400 whitespace-nowrap">
               Acciones: {actionsThisTurn}/1
             </div>
           )}

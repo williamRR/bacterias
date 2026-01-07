@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -H 0.0.0.0",
     "dev:server": "tsx server.ts",
     "build": "next build",
     "start": "next start",
@@ -12,9 +12,14 @@
     "generate-assets": "tsx scripts/generate-assets.ts",
     "generate-assets:cards": "tsx scripts/generate-assets.ts --type=cards",
     "generate-assets:icons": "tsx scripts/generate-assets.ts --type=icons",
-    "generate-assets:backgrounds": "tsx scripts/generate-assets.ts --type=backgrounds"
+    "generate-assets:backgrounds": "tsx scripts/generate-assets.ts --type=backgrounds",
+    "simulate": "tsx src/simulator/run-simulation.ts",
+    "simulate:quick": "tsx src/simulator/run-simulation.ts --count 1000 --verbose",
+    "simulate:debug": "tsx src/simulator/run-simulation.ts --count 100 --verbose",
+    "analyze:deck": "tsx src/simulator/analyze-deck.ts"
   },
   "dependencies": {
+    "driver.js": "^1.4.0",
     "next": "^14.2.0",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",

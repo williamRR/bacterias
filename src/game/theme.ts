@@ -19,10 +19,25 @@ export const CARD_TYPE_LABELS: Record<CardType, string> = {
 
 // Mapping de TreatmentType a nombres espaciales
 export const TREATMENT_LABELS: Record<TreatmentType, string> = {
-  [TreatmentType.TRANSPLANT]: 'INTERCAMBIO DE PIEZAS',
-  [TreatmentType.ORGAN_THIEF]: 'ROBO DE PIEZAS',
-  [TreatmentType.LATEX_GLOVE]: 'INTERFERENCIA ELECTROMAGNÉTICA',
-  [TreatmentType.MEDICAL_ERROR]: 'FALLO DE TELETRANSPORTE',
+  [TreatmentType.ENERGY_TRANSFER]: 'TRANSFERENCIA DE ENERGÍA',
+  [TreatmentType.EMERGENCY_DECOMPRESSION]: 'DESCOMPRESIÓN DE EMERGENCIA',
+  [TreatmentType.DATA_PIRACY]: 'PIRATERÍA DE DATOS',
+  [TreatmentType.QUANTUM_DESYNC]: 'DESINCRONIZACIÓN CUÁNTICA',
+  [TreatmentType.PROTOCOL_ERROR]: 'ERROR DE PROTOCOLO',
+  [TreatmentType.SINGULARITY]: 'SINGULARIDAD',
+  [TreatmentType.EVENT_HORIZON]: 'HORIZONTE DE SUCESOS',
+  [TreatmentType.BACKUP_SYSTEM]: 'SISTEMA DE RESPALDO',
+} as const;
+
+export const TREATMENT_DESCRIPTIONS: Record<TreatmentType, string> = {
+  [TreatmentType.ENERGY_TRANSFER]: 'Mueve una avería o mejora de un módulo a otro del mismo tipo.',
+  [TreatmentType.EMERGENCY_DECOMPRESSION]: 'Regresa un módulo rival a su mano. Descarta sus cartas unidas.',
+  [TreatmentType.DATA_PIRACY]: 'Roba un módulo de un oponente (con sus cartas unidas). No funciona en sistemas blindados.',
+  [TreatmentType.QUANTUM_DESYNC]: 'El oponente objetivo descarta una carta de su mano.',
+  [TreatmentType.PROTOCOL_ERROR]: 'Descarta una carta de tu mano para eliminar una avería objetivo.',
+  [TreatmentType.SINGULARITY]: 'Intercambia todos los sistemas entre dos jugadores.',
+  [TreatmentType.EVENT_HORIZON]: 'Todos tus oponentes descartan su mano completa.',
+  [TreatmentType.BACKUP_SYSTEM]: 'Recupera un sistema destruido del descarte y lo reinstala.',
 } as const;
 
 // Mapping de OrganState a nombres espaciales
@@ -81,7 +96,7 @@ export const UI_LABELS = {
   yourTurn: '🟢 Tu Turno',
   turnOf: '🔴 Turno de',
   waiting: '⏳ Espera tu turno para jugar',
-  endTurn: '⏭️ Terminar Turno',
+  endTurn: 'Terminar Turno',
   playCard: '🎯 Ejecutar Acción',
   discard: '🗑️ Descartar',
   cancel: '❌ Cancelar',

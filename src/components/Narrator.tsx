@@ -1,55 +1,78 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
+
+export type NotificationType = 'info' | 'success' | 'warning' | 'error';
 
 interface NarratorProps {
-  message: string;
+  message: string | null;
+  type?: NotificationType;
   duration?: number;
   onComplete?: () => void;
 }
 
-export default function Narrator({ message, duration = 2000, onComplete }: NarratorProps) {
-  const [visible, setVisible] = useState(false);
+export default function Narrator({ message, type = 'info', duration = 3000, onComplete }: NarratorProps) {
+  const [currentMessage, setCurrentMessage] = useState<string | null>(null);
   const [fadingOut, setFadingOut] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const fadeRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    setVisible(true);
-    setFadingOut(false);
+    if (message) {
+      // Reset animations if a new message arrives while one is active
+      setFadingOut(false);
+      setCurrentMessage(message);
 
-    const fadeOutTimer = setTimeout(() => {
-      setFadingOut(true);
-    }, duration - 500);
+      if (timerRef.current) clearTimeout(timerRef.current);
+      if (fadeRef.current) clearTimeout(fadeRef.current);
 
-    const completeTimer = setTimeout(() => {
-      setVisible(false);
-      onComplete?.();
-    }, duration);
+      fadeRef.current = setTimeout(() => {
+        setFadingOut(true);
+      }, duration - 500);
+
+      timerRef.current = setTimeout(() => {
+        setCurrentMessage(null);
+        onComplete?.();
+      }, duration);
+    }
 
     return () => {
-      clearTimeout(fadeOutTimer);
-      clearTimeout(completeTimer);
+      if (timerRef.current) clearTimeout(timerRef.current);
+      if (fadeRef.current) clearTimeout(fadeRef.current);
     };
   }, [message, duration, onComplete]);
 
-  if (!visible) return null;
+  if (!currentMessage) return null;
+
+  const getTypeStyles = () => {
+    switch (type) {
+      case 'success': return 'border-emerald-500/30 text-emerald-400 from-emerald-400 to-emerald-600';
+      case 'error': return 'border-red-500/30 text-red-400 from-red-400 to-red-600';
+      case 'warning': return 'border-amber-500/30 text-amber-400 from-amber-400 to-amber-600';
+      default: return 'border-cyan-400/30 text-cyan-400 from-cyan-400 to-cyan-600';
+    }
+  };
+
+  const styles = getTypeStyles();
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
-      {/* Mensaje flotante en posición superior - no bloquea interacciones */}
-      <div className={`fixed top-6 md:top-8 left-1/2 -translate-x-1/2 transition-all duration-500 ${fadingOut ? 'opacity-0 translate-y-[-20px]' : 'opacity-100 translate-y-0'}`}>
-        <div className="relative px-3 md:px-6 py-1.5 md:py-3 glass-panel border border-cyan-400/30 rounded-lg md:rounded-xl shadow-[0_0_30px_rgba(34,211,238,0.15)] bg-slate-950/60 backdrop-blur-sm">
-          {/* Indicador brillante izquierdo */}
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 md:w-1 h-5 md:h-8 bg-gradient-to-b from-cyan-400 to-cyan-600 rounded-r-full animate-pulse" />
+    <div className="fixed top-20 left-0 right-0 z-[100] flex justify-center pointer-events-none px-4">
+      <div className={`
+        relative px-4 md:px-8 py-2 md:py-3 glass-panel border rounded-xl shadow-2xl transition-all duration-300
+        ${fadingOut ? 'opacity-0 scale-95 -translate-y-4' : 'opacity-100 scale-100 translate-y-0'}
+        ${styles.split(' ').slice(0, 1).join(' ')}
+      `}>
+        {/* Indicador brillante lateral */}
+        <div className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-2/3 bg-gradient-to-b rounded-r-full animate-pulse ${styles.split(' ').slice(2).join(' ')}`} />
 
-          <div className="flex items-center gap-2 md:gap-4">
-            <div className="text-[8px] md:text-[9px] font-black text-cyan-400 uppercase tracking-[0.15em] md:tracking-[0.2em]">
-              {message}
-            </div>
-          </div>
-
-          {/* Línea decorativa inferior */}
-          <div className="absolute bottom-0 left-0 right-0 h-[0.5px] bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent" />
+        <div className="flex items-center gap-3">
+          <p className={`text-xs md:text-sm font-black uppercase tracking-wider text-center ${styles.split(' ').slice(1, 2).join(' ')}`}>
+            {currentMessage}
+          </p>
         </div>
+
+        {/* Línea decorativa inferior */}
+        <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
       </div>
     </div>
   );
