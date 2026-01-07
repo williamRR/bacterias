@@ -45,4 +45,4 @@ API_KEY*
 # Desarrollo y debugging
 logs/
 simulation-reports/
-src/simulator/
+simulator/
