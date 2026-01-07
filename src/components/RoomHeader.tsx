@@ -7,6 +7,8 @@ interface RoomHeaderProps {
   isCurrentPlayer: boolean;
   actionsThisTurn: number;
   uiLabels: any;
+  turnTimeRemaining?: number | null;
+  turnTimeLimit?: number | null;
 }
 
 export default function RoomHeader({
@@ -16,6 +18,8 @@ export default function RoomHeader({
   isCurrentPlayer,
   actionsThisTurn,
   uiLabels,
+  turnTimeRemaining,
+  turnTimeLimit,
 }: RoomHeaderProps) {
   const [copied, setCopied] = useState(false);
 
@@ -53,9 +57,16 @@ export default function RoomHeader({
             {isCurrentPlayer ? `${uiLabels.yourTurn}` : `${uiLabels.turnOf}: ${currentPlayerName}`}
           </div>
           {isCurrentPlayer && (
-            <div className="text-[10px] md:text-xs text-gray-400 whitespace-nowrap">
-              Acciones: {actionsThisTurn}/1
-            </div>
+            <>
+              <div className="text-[10px] md:text-xs text-gray-400 whitespace-nowrap">
+                Acciones: {actionsThisTurn}/1
+              </div>
+              {turnTimeLimit !== null && turnTimeLimit !== undefined && turnTimeRemaining !== null && turnTimeRemaining !== undefined && (
+                <div className={`text-[10px] md:text-xs font-bold whitespace-nowrap ${turnTimeRemaining <= 5 ? 'text-red-400 animate-pulse' : turnTimeRemaining <= 10 ? 'text-yellow-400' : 'text-green-400'}`}>
+                  ⏱️ {turnTimeRemaining}s
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

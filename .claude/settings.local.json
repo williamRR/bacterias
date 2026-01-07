@@ -39,7 +39,9 @@
       "Bash(npm run simulate:*)",
       "Bash(npx tsx:*)",
       "Bash(railway --version:*)",
-      "Bash(railway:*)"
+      "Bash(railway:*)",
+      "Bash(npm run dev)",
+      "Bash(python3:*)"
     ]
   }
 }

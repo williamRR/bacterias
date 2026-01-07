@@ -14,39 +14,53 @@ export const GAME_THEME = {
 // SVG ICONS - Minimalista
 // ============================================
 
-export const SvgIconRed = (props: SVGProps<SVGSVGElement>) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <circle cx="12" cy="12" r="3" />
-    <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
-  </svg>
-);
+export const getSystemIconPath = (color: Color): string => {
+  switch (color) {
+    case Color.RED:
+      return '/assets/icons/ENERGIA_RED.svg';
+    case Color.BLUE:
+      return '/assets/icons/oxigeno_blue.svg';
+    case Color.GREEN:
+      return '/assets/icons/bioseguridad_green.svg';
+    case Color.YELLOW:
+      return '/assets/icons/agua_y_alimentos_yellow.svg';
+    case Color.MULTICOLOR:
+      return '';
+    default:
+      return '';
+  }
+};
 
-export const SvgIconBlue = (props: SVGProps<SVGSVGElement>) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <path d="M12 4a8 8 0 0 1 8 8M4 12a8 8 0 0 1 8-8" />
-    <circle cx="12" cy="12" r="2" />
-  </svg>
-);
-
-export const SvgIconGreen = (props: SVGProps<SVGSVGElement>) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <polygon points="12,2 22,20 2,20" />
-    <circle cx="12" cy="14" r="2" />
-  </svg>
-);
-
-export const SvgIconYellow = (props: SVGProps<SVGSVGElement>) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <path d="M12 2L20 12L12 22L4 12Z" />
-  </svg>
-);
-
-export const SvgIconMulticolor = (props: SVGProps<SVGSVGElement>) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <rect x="3" y="3" width="18" height="18" rx="2" />
-    <path d="M12 8v8M8 12h8" />
-  </svg>
-);
+const SystemIconMask = ({ color, ...props }: { color: Color } & React.HTMLAttributes<HTMLDivElement>) => {
+  const path = getSystemIconPath(color);
+  if (!path) return null;
+  return (
+    <div
+      {...props}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'currentColor',
+        // Invert mask to color the drawing
+        maskImage: `url(${path}), linear-gradient(black, black)`,
+        WebkitMaskImage: `url(${path}), linear-gradient(black, black)`,
+        maskComposite: 'exclude',
+        WebkitMaskComposite: 'destination-out',
+        maskRepeat: 'no-repeat',
+        WebkitMaskRepeat: 'no-repeat',
+        maskPosition: 'center',
+        WebkitMaskPosition: 'center',
+        maskSize: 'contain',
+        WebkitMaskSize: 'contain',
+        // Clip side artifacts (extra bars)
+        clipPath: 'inset(0 11%)',
+        WebkitClipPath: 'inset(0 11%)',
+        ...props.style
+      }}
+    />
+  );
+};
 
 // Virus icon (negative - sabotaje)
 export const SvgIconVirus = (props: SVGProps<SVGSVGElement>) => (
@@ -72,12 +86,17 @@ export const SvgIconTreatment = (props: SVGProps<SVGSVGElement>) => (
 );
 
 // Mapping de colores a componentes SVG
-export const SYSTEM_SVG_ICONS: Record<Color, React.ComponentType<SVGProps<SVGSVGElement>>> = {
-  [Color.RED]: SvgIconRed,
-  [Color.BLUE]: SvgIconBlue,
-  [Color.GREEN]: SvgIconGreen,
-  [Color.YELLOW]: SvgIconYellow,
-  [Color.MULTICOLOR]: SvgIconMulticolor,
+export const SYSTEM_SVG_ICONS: Record<Color, React.ComponentType<any>> = {
+  [Color.RED]: (props: any) => <SystemIconMask color={Color.RED} {...props} />,
+  [Color.BLUE]: (props: any) => <SystemIconMask color={Color.BLUE} {...props} />,
+  [Color.GREEN]: (props: any) => <SystemIconMask color={Color.GREEN} {...props} />,
+  [Color.YELLOW]: (props: any) => <SystemIconMask color={Color.YELLOW} {...props} />,
+  [Color.MULTICOLOR]: (props: any) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <path d="M12 8v8M8 12h8" />
+    </svg>
+  ),
 } as const;
 
 // Mapping de tipos de cartas a nombres espaciales

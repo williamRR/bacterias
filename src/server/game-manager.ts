@@ -1,7 +1,7 @@
 import { GameState, Card, Player, Color, TreatmentType, OrganSlot, OrganState, CardType } from '../game/types';
 import { nextTurn, playCard, discardCards, drawCards, initializeGame, checkGameVictory } from '../game/engine';
 import { canPlayCard, canPerformTransplant, canPerformOrganThief, getOrganState } from '../game/validation';
-import { getRoom, rooms } from './rooms';
+import { getRoom, rooms, clearTurnTimer, setTurnTimer } from './rooms';
 import { Server as SocketIOServer } from 'socket.io';
 import { getSlotFromBody, setSlotInBody, getBodyEntries, serializeBody, initializeEmptySlot, getBodySlots } from '../game/body-utils';
 import { swapSlotContents, transferSlotContents, clearSlot, swapPlayerBodies, getPlayerSlot, swapOrgansBetweenPlayers } from '../utils/slotOperations';
@@ -33,6 +33,7 @@ let io: SocketIOServer | null = null;
 
 export function setIOInstance(socketIO: SocketIOServer): void {
   io = socketIO;
+  (global as any).io = socketIO; // También guardarlo en global para rooms.ts
 }
 
 function broadcastGameState(roomId: string, gameState: GameState): void {
@@ -52,6 +53,35 @@ function sendNotificationToPlayer(roomId: string, playerId: string, message: str
 function broadcastNarration(roomId: string, message: string, senderId?: string): void {
   if (!io) return;
   io.to(roomId).emit('narration', { message, senderId });
+}
+
+export function startTurnTimer(roomId: string): void {
+  const room = getRoom(roomId);
+  console.log('🕐 startTurnTimer called for room:', roomId, 'turnTimeLimit:', room?.turnTimeLimit);
+
+  if (!room || !room.gameState.gameStarted || room.gameState.gameEnded) {
+    return;
+  }
+
+  const currentPlayerIndex = room.gameState.currentPlayerIndex;
+  const currentPlayerId = room.gameState.players[currentPlayerIndex]?.id;
+
+  if (!currentPlayerId) return;
+
+  // Limpiar timer anterior si existe
+  clearTurnTimer(roomId);
+
+  // Iniciar nuevo timer
+  setTurnTimer(roomId, () => {
+    // Auto-end-turn cuando se acaba el tiempo
+    const room = getRoom(roomId);
+    if (room && !room.gameState.gameEnded) {
+      handleGameAction(roomId, currentPlayerId, { type: 'end-turn' });
+      if (io) {
+        io.to(roomId).emit('turn-timeout', { playerId: currentPlayerId });
+      }
+    }
+  });
 }
 
 function handleTreatmentCard(roomId: string, player: Player, targetPlayer: Player, card: Card, targetColor: Color, sourceColor?: Color, secondTargetPlayerId?: string, sourcePlayerId?: string): boolean {
@@ -412,6 +442,7 @@ export function handleGameAction(roomId: string, playerId: string, action: any):
       logger.logTurnStarted(nextPlayer.name, nextPlayerIndex);
       broadcastNarration(roomId, `Turno de ${nextPlayer.name}`);
       broadcastGameState(roomId, gameState);
+      startTurnTimer(roomId); // Iniciar timer para el nuevo turno
       break;
     }
 

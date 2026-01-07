@@ -32,6 +32,19 @@ export default function Home() {
           <h2 className="text-2xl font-bold mb-6 text-cyan-300">Iniciar Misión</h2>
 
           <div className="space-y-4">
+            <a
+              href="/demo"
+              className="block w-full bg-emerald-600/80 hover:bg-emerald-500/90 border border-emerald-500/30 px-8 py-3 rounded-xl font-bold text-sm transition-all hover:scale-105"
+            >
+              👁️ Vista Previa del Juego
+            </a>
+
+            <div className="flex items-center gap-4">
+              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent"></div>
+              <span className="text-gray-400 text-sm">O</span>
+              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent"></div>
+            </div>
+
             {/* Botón para crear sala */}
             <a
               href="/create-room"

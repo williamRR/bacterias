@@ -2,7 +2,7 @@ import { createServer } from 'http';
 import { parse } from 'url';
 import next from 'next';
 import { Server as ServerIO } from 'socket.io';
-import { createRoom, joinRoom, startGame, getRoomPlayers, getRoom, rooms, cancelPlayerDeletion } from './src/server/rooms';
+import { createRoom, joinRoom, startGame, getRoomPlayers, getRoom, rooms, cancelPlayerDeletion, clearTurnTimer, setTurnTimer } from './src/server/rooms';
 import { handleGameAction, setIOInstance } from './src/server/game-manager';
 import { gameLogger } from './src/game/logger';
 
@@ -101,12 +101,12 @@ app.prepare().then(() => {
       (socket as any).browserId = browserId;
     });
 
-    socket.on('create-room', ({ playerName, browserId }) => {
+    socket.on('create-room', ({ playerName, browserId, turnTimeLimit }) => {
       const roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
       (socket as any).browserId = browserId; // Guardar browserId
-      createRoom(roomId, browserId || socket.id, playerName);
+      createRoom(roomId, browserId || socket.id, playerName, turnTimeLimit);
       socket.join(roomId);
-      socket.emit('room-created', { roomId, playerId: browserId || socket.id });
+      socket.emit('room-created', { roomId, playerId: browserId || socket.id, turnTimeLimit });
     });
 
     socket.on('join-room', ({ roomId, playerName, browserId }) => {
@@ -130,7 +130,7 @@ app.prepare().then(() => {
           socket.emit('game-started', { gameState: serializeGameState(room.gameState), reconnected: true });
         }
 
-        socket.emit('room-joined', { roomId, playerId, players: getRoomPlayers(roomId), reconnected: true });
+        socket.emit('room-joined', { roomId, playerId, players: getRoomPlayers(roomId), reconnected: true, turnTimeLimit: room.turnTimeLimit });
         return;
       }
 
@@ -148,7 +148,7 @@ app.prepare().then(() => {
 
         // Juego no iniciado, comportamiento normal
         io.to(roomId).emit('player-joined', { playerId, playerName, players: getRoomPlayers(roomId) });
-        socket.emit('room-joined', { roomId, playerId, players: getRoomPlayers(roomId) });
+        socket.emit('room-joined', { roomId, playerId, players: getRoomPlayers(roomId), turnTimeLimit: joinedRoom.turnTimeLimit });
       } else {
         socket.emit('join-error', { error: 'room_not_found', message: 'Sala no encontrada' });
       }
@@ -164,8 +164,10 @@ app.prepare().then(() => {
       if (success) {
         const room = getRoom(roomId);
         if (room) {
-          const { serializeGameState, broadcastGameState } = require('./src/server/game-manager');
+          const { serializeGameState, startTurnTimer } = require('./src/server/game-manager');
           io.to(roomId).emit('game-started', { gameState: serializeGameState(room.gameState) });
+          // Iniciar el timer del primer turno
+          startTurnTimer(roomId);
         }
       } else {
         socket.emit('error', { message: 'No se pudo iniciar el juego' });

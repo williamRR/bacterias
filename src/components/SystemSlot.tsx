@@ -3,6 +3,7 @@ import { getOrganState } from '../game/validation';
 import {
   COLOR_SYSTEM_LABELS,
   ORGAN_STATE_LABELS,
+  SYSTEM_SVG_ICONS,
 } from '../game/theme';
 
 export interface SlotData {
@@ -34,51 +35,15 @@ const getSystemColorValue = (color: Color): string => {
   }
 };
 
-const getSystemIconPath = (color: Color): string => {
-  switch (color) {
-    case Color.RED:
-      return '/assets/icons/ENERGIA_RED.svg';
-    case Color.BLUE:
-      return '/assets/icons/oxigeno_blue.svg';
-    case Color.GREEN:
-      return '/assets/icons/bioseguridad_green.svg';
-    case Color.YELLOW:
-      return '/assets/icons/agua_y_alimentos_yellow.svg';
-    case Color.MULTICOLOR:
-      return '';
-    default:
-      return '';
-  }
-};
 
 const getNeonConfig = (color: Color) => {
   return {
-    [Color.RED]: {
-      shadow: 'shadow-red-500/20',
-      text: 'text-red-400/90',
-      glow: 'drop-shadow-[0_0_5px_rgba(239,68,68,0.4)]'
-    },
-    [Color.BLUE]: {
-      shadow: 'shadow-cyan-500/20',
-      text: 'text-cyan-400/90',
-      glow: 'drop-shadow-[0_0_5px_rgba(6,182,212,0.4)]'
-    },
-    [Color.GREEN]: {
-      shadow: 'shadow-emerald-500/20',
-      text: 'text-emerald-400/90',
-      glow: 'drop-shadow-[0_0_5px_rgba(16,185,129,0.4)]'
-    },
-    [Color.YELLOW]: {
-      shadow: 'shadow-yellow-500/20',
-      text: 'text-yellow-400/90',
-      glow: 'drop-shadow-[0_0_5px_rgba(234,179,8,0.4)]'
-    },
-    [Color.MULTICOLOR]: {
-      shadow: 'shadow-violet-500/20',
-      text: 'text-violet-400/90',
-      glow: 'drop-shadow-[0_0_5px_rgba(168,85,247,0.4)]'
-    },
-  }[color] || { shadow: '', text: 'text-gray-500', glow: '' };
+    [Color.RED]: 'text-red-400',
+    [Color.BLUE]: 'text-cyan-400',
+    [Color.GREEN]: 'text-emerald-400',
+    [Color.YELLOW]: 'text-yellow-400',
+    [Color.MULTICOLOR]: 'text-violet-400',
+  }[color] || 'text-gray-500';
 };
 
 export default function SystemSlot({
@@ -95,7 +60,7 @@ export default function SystemSlot({
   const state = slot ? getOrganState(slot) : 'REMOVED';
   const medicineCount = slot?.medicineCards.length || 0;
   const virusCount = slot?.virusCards.length || 0;
-  const neonConfig = getNeonConfig(color);
+  const neonConfig = getNeonConfig(color) as string;
 
   const getStateBadgeStyle = (state: string): string => {
     switch (state) {
@@ -117,37 +82,35 @@ export default function SystemSlot({
         relative flex flex-col items-center justify-center h-20 md:h-24 rounded-xl transition-all overflow-hidden cursor-pointer
         ${isEmpty
           ? 'bg-black/20 border-2 border-dashed border-white/5'
-          : `bg-slate-800/40 border-2 shadow-inner bg-radial-system ${neonConfig.shadow}`
+          : 'bg-slate-800/40 border-2 shadow-inner bg-radial-system'
         }
         ${isValid ? 'ring-2 ring-yellow-400 scale-[1.02] animate-vibrate' : 'hover:bg-white/5'}
         ${isSelected ? 'ring-2 ring-white z-10' : ''}
       `}
-      style={!isEmpty ? { '--tw-shadow-color': getSystemColorValue(color) } as any : {}}
     >
       {/* Scan effect for empty slots */}
       {isEmpty && <div className="absolute inset-0 animate-scan-pulse bg-white/5 pointer-events-none" />}
 
       {/* Icono con Mask Image para limpieza de activos */}
-      <div
-        className={`w-10 h-10 md:w-12 md:h-12 transition-all mb-1
-          ${isEmpty ? 'opacity-10 grayscale' : `opacity-90 ${neonConfig.glow}`}
-        `}
-        style={{
-          backgroundColor: getSystemColorValue(color),
-          maskImage: `url(${getSystemIconPath(color)})`,
-          WebkitMaskImage: `url(${getSystemIconPath(color)})`,
-          maskRepeat: 'no-repeat',
-          WebkitMaskRepeat: 'no-repeat',
-          maskPosition: 'center',
-          WebkitMaskPosition: 'center',
-          maskSize: 'contain',
-          WebkitMaskSize: 'contain',
-        }}
-      />
+      {(() => {
+        const Icon = SYSTEM_SVG_ICONS[color];
+        if (!Icon) return null;
+
+        // El multicolor usa un componente SVG directo en theme.tsx, 
+        // los demás usan SystemIconMask que responde a 'currentColor'
+        return (
+          <Icon
+            className={`w-10 h-10 md:w-12 md:h-12 transition-all mb-1 ${isEmpty ? 'opacity-10 grayscale' : 'opacity-90'}`}
+            style={{
+              color: getSystemColorValue(color),
+            }}
+          />
+        );
+      })()}
 
       {/* Nombre del sistema: Solo brilla si existe el órgano */}
       <span className={`text-[7px] md:text-[9px] font-bold tracking-tighter uppercase transition-all
-        ${isEmpty ? 'text-slate-600' : `${neonConfig.text} ${neonConfig.glow}`}`}>
+        ${isEmpty ? 'text-slate-600' : neonConfig}`}>
         {COLOR_SYSTEM_LABELS[color]}
       </span>
 
@@ -158,7 +121,7 @@ export default function SystemSlot({
           {medicineCount > 0 && (
             <div className="flex gap-0.5 md:gap-1 justify-center">
               {Array.from({ length: medicineCount }).map((_, i) => (
-                <div key={`med-${i}`} className="w-3 h-0.5 md:w-5 md:h-1 bg-cyan-400 rounded-full shadow-[0_0_5px_rgba(34,211,238,0.8)]" />
+                <div key={`med-${i}`} className="w-3 h-0.5 md:w-5 md:h-1 bg-cyan-400 rounded-full" />
               ))}
             </div>
           )}
@@ -166,7 +129,7 @@ export default function SystemSlot({
           {virusCount > 0 && (
             <div className="flex gap-0.5 md:gap-1 justify-center">
               {Array.from({ length: virusCount }).map((_, i) => (
-                <div key={`vir-${i}`} className="w-1 h-1 md:w-1.5 md:h-1.5 bg-red-500 rounded-full shadow-[0_0_5px_rgba(239,68,68,0.8)]" />
+                <div key={`vir-${i}`} className="w-1 h-1 md:w-1.5 md:h-1.5 bg-red-500 rounded-full" />
               ))}
             </div>
           )}

@@ -10,6 +10,9 @@ interface Room {
   gameState: GameState;
   hostId: string;
   emptySince?: number;
+  turnTimeLimit?: number | null;  // Límite de tiempo por turno en segundos (null = sin límite)
+  turnTimer?: NodeJS.Timeout;     // Timer principal del turno (setTimeout)
+  turnCountdownInterval?: NodeJS.Timeout;  // Intervalo de countdown (setInterval)
 }
 
 const rooms = new Map<string, Room>();
@@ -17,7 +20,7 @@ const rooms = new Map<string, Room>();
 // Timeouts de desconexión pendientes (para permitir reconexión)
 const disconnectTimeouts = new Map<string, NodeJS.Timeout>();
 
-function createRoom(roomId: string, playerId: string, playerName: string): Room {
+function createRoom(roomId: string, playerId: string, playerName: string, turnTimeLimit?: number | null): Room {
   const room: Room = {
     id: roomId,
     players: new Map(),
@@ -30,6 +33,7 @@ function createRoom(roomId: string, playerId: string, playerName: string): Room 
       gameEnded: false,
     },
     hostId: playerId,
+    turnTimeLimit,
   };
 
   const player: Player = {
@@ -195,4 +199,72 @@ function cancelPlayerDeletion(playerId: string): void {
   }
 }
 
-export { createRoom, joinRoom, startGame, getRoom, deleteRoom, getRoomPlayers, deletePlayerFromRoom, cancelPlayerDeletion, rooms };
+// Limpiar el timer de turno actual de una sala
+function clearTurnTimer(roomId: string): void {
+  const room = rooms.get(roomId);
+  if (room?.turnTimer) {
+    clearTimeout(room.turnTimer);
+    room.turnTimer = undefined;
+  }
+  if (room?.turnCountdownInterval) {
+    clearInterval(room.turnCountdownInterval);
+    room.turnCountdownInterval = undefined;
+  }
+}
+
+// Configurar un timer para el turno actual
+function setTurnTimer(roomId: string, onTimeout: () => void): void {
+  const room = rooms.get(roomId);
+  console.log('⏱️ setTurnTimer called for room:', roomId, 'turnTimeLimit:', room?.turnTimeLimit);
+
+  console.log('🔍 DEBUG room exists:', !!room);
+  console.log('🔍 DEBUG turnTimeLimit value:', room?.turnTimeLimit);
+  console.log('🔍 DEBUG turnTimeLimit === null:', room?.turnTimeLimit === null);
+  console.log('🔍 DEBUG turnTimeLimit === undefined:', room?.turnTimeLimit === undefined);
+
+  if (!room || room.turnTimeLimit === null || room.turnTimeLimit === undefined) {
+    console.log('❌ setTurnTimer: No timer - room:', !!room, 'limit:', room?.turnTimeLimit);
+    return; // No hay límite de tiempo
+  }
+
+  console.log('✅ setTurnTimer: Passed validation, creating timer');
+
+  // Limpiar timer anterior si existe
+  if (room.turnTimer) {
+    clearTimeout(room.turnTimer);
+  }
+  if (room.turnCountdownInterval) {
+    clearInterval(room.turnCountdownInterval);
+  }
+
+  const io = (global as any).io;
+  const timeLimit = room.turnTimeLimit;
+
+  // Emitir countdown cada segundo
+  let remaining = timeLimit;
+  console.log(`🔄 Starting countdown interval for room ${roomId}, limit: ${timeLimit}s`);
+  const countdownInterval = setInterval(() => {
+    console.log(`⏰ Interval fired - room ${roomId}, remaining: ${remaining}s`);
+    if (io) {
+      console.log(`⏰ Room ${roomId} - turn-tick: ${remaining}s - EMITTING`);
+      io.to(roomId).emit('turn-tick', { remaining });
+    }
+    remaining--;
+
+    if (remaining < 0) {
+      console.log(`⏰ Countdown finished for room ${roomId}`);
+      clearInterval(countdownInterval);
+    }
+  }, 1000);
+
+  // Guardar la referencia del intervalo en la sala
+  room.turnCountdownInterval = countdownInterval;
+
+  // Timer principal que ejecuta el timeout
+  room.turnTimer = setTimeout(() => {
+    clearInterval(countdownInterval);
+    onTimeout();
+  }, timeLimit * 1000);
+}
+
+export { createRoom, joinRoom, startGame, getRoom, deleteRoom, getRoomPlayers, deletePlayerFromRoom, cancelPlayerDeletion, clearTurnTimer, setTurnTimer, rooms };

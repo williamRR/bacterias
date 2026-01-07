@@ -40,6 +40,10 @@ export default function RoomPage({ params }: RoomPageProps) {
   const [copiedId, setCopiedId] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState(false);
 
+  // Timer del turno
+  const [turnTimeRemaining, setTurnTimeRemaining] = useState<number | null>(null);
+  const [turnTimeLimit, setTurnTimeLimit] = useState<number | null>(null);
+
   const currentPlayerIdRef = useRef<string | null>(null);
 
   const notify = useCallback((message: string, type: NotificationType = 'info') => {
@@ -68,11 +72,12 @@ export default function RoomPage({ params }: RoomPageProps) {
     setCurrentTurnIndex(state.currentPlayerIndex);
   }, []);
 
-  const handleRoomJoined = useCallback(({ playerId, players: roomPlayers }: { playerId: string; players: Player[] }) => {
+  const handleRoomJoined = useCallback(({ playerId, players: roomPlayers, turnTimeLimit: roomTurnTimeLimit }: { playerId: string; players: Player[]; turnTimeLimit?: number | null }) => {
     setJoined(true);
     setPlayers(roomPlayers);
     setCurrentPlayerId(playerId);
     setPlayerName(localStorage.getItem('playerName') || '');
+    setTurnTimeLimit(roomTurnTimeLimit ?? null);
     notify(`¡Te has unido al sector ${params.id}!`, 'success');
     addToGameLog(`Te has unido a la sala ${params.id}`);
   }, [params.id, notify, addToGameLog]);
@@ -125,6 +130,17 @@ export default function RoomPage({ params }: RoomPageProps) {
     }
   }, [notify, addToGameLog]);
 
+  const handleTurnTick = useCallback((remaining: number) => {
+    setTurnTimeRemaining(Math.max(0, remaining));
+  }, []);
+
+  const handleTurnTimeout = useCallback((data: { playerId: string }) => {
+    if (data.playerId === currentPlayerIdRef.current) {
+      notify('⏰ ¡Tiempo agotado! Turno finalizado automáticamente', 'warning');
+      addToGameLog('Tu turno ha finalizado por tiempo');
+    }
+  }, [notify, addToGameLog]);
+
   // Socket setup
   const socketRef = useGameSocket({
     roomId: params.id,
@@ -139,6 +155,8 @@ export default function RoomPage({ params }: RoomPageProps) {
     onNarration: handleNarration,
     onGameRestarted: handleGameRestarted,
     onTurnChange: handleTurnChange,
+    onTurnTick: handleTurnTick,
+    onTurnTimeout: handleTurnTimeout,
     currentPlayerIdRef,
   });
 
@@ -295,12 +313,12 @@ export default function RoomPage({ params }: RoomPageProps) {
       {/* Botón flotante del historial */}
       <button
         onClick={() => setShowLogModal(!showLogModal)}
-        className="fixed top-40 md:top-40 left-4 z-50 glass-panel hover:bg-cyan-500/10 border-cyan-500/50 rounded-xl p-2 md:p-3 shadow-lg transition-all hover:scale-105 active:scale-95 group"
+        className="fixed top-32 md:top-40 left-2 md:left-4 z-50 glass-panel hover:bg-cyan-500/10 border-cyan-500/50 rounded-lg md:rounded-xl p-1.5 md:p-3 shadow-lg transition-all hover:scale-105 active:scale-95 group"
         title="Consola de Misión"
       >
-        <span className="text-lg md:text-xl group-hover:rotate-12 transition-transform inline-block">📟</span>
+        <span className="text-base md:text-xl group-hover:rotate-12 transition-transform inline-block">📟</span>
         {gameLog.length > 0 && (
-          <span className="absolute -top-1 -right-1 bg-cyan-500 text-slate-900 text-[10px] rounded-full w-5 h-5 flex items-center justify-center font-black animate-pulse">
+          <span className="absolute -top-0.5 md:-top-1 -right-0.5 md:-right-1 bg-cyan-500 text-slate-900 text-[9px] md:text-[10px] rounded-full w-4 h-4 md:w-5 md:h-5 flex items-center justify-center font-black animate-pulse">
             {gameLog.length}
           </span>
         )}
@@ -313,40 +331,40 @@ export default function RoomPage({ params }: RoomPageProps) {
             window.location.href = '/';
           }
         }}
-        className="fixed top-40 md:top-40 right-4 z-50 glass-panel hover:bg-red-500/10 border-cyan-500/50 rounded-xl p-2 md:p-3 shadow-lg transition-all hover:scale-105 active:scale-95 group"
+        className="fixed top-32 md:top-40 right-2 md:right-4 z-50 glass-panel hover:bg-red-500/10 border-cyan-500/50 rounded-lg md:rounded-xl p-1.5 md:p-3 shadow-lg transition-all hover:scale-105 active:scale-95 group"
         title="Volver al Menú Principal"
       >
-        <span className="text-lg md:text-xl group-hover:scale-110 transition-transform inline-block">🏠</span>
+        <span className="text-base md:text-xl group-hover:scale-110 transition-transform inline-block">🏠</span>
       </button>
 
       {/* Modal del historial */}
       {showLogModal && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4">
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 md:pt-20 px-3 md:px-4">
           <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-md" onClick={() => setShowLogModal(false)} />
-          <div className="relative glass-panel border-cyan-500/50 rounded-3xl p-6 max-w-lg w-full max-h-[70vh] overflow-hidden shadow-[0_0_50px_rgba(34,211,238,0.15)]">
-            <div className="flex justify-between items-center mb-6 border-b border-cyan-500/20 pb-4">
-              <h3 className="text-lg font-black text-cyan-400 flex items-center gap-3 uppercase tracking-[0.2em]">
-                <span className="animate-pulse">●</span> Registro de Misión
+          <div className="relative glass-panel border-cyan-500/50 rounded-2xl md:rounded-3xl p-4 md:p-6 max-w-lg w-full max-h-[75vh] md:max-h-[70vh] overflow-hidden shadow-[0_0_50px_rgba(34,211,238,0.15)]">
+            <div className="flex justify-between items-center mb-4 md:mb-6 border-b border-cyan-500/20 pb-3 md:pb-4">
+              <h3 className="text-sm md:text-lg font-black text-cyan-400 flex items-center gap-2 md:gap-3 uppercase tracking-[0.15em] md:tracking-[0.2em]">
+                <span className="animate-pulse text-xs md:text-sm">●</span> <span className="text-xs md:text-base">Registro</span>
               </h3>
               <button
                 onClick={() => setShowLogModal(false)}
-                className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition-all transform hover:rotate-90"
+                className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition-all transform hover:rotate-90"
               >
                 ✕
               </button>
             </div>
-            <div className="space-y-3 overflow-y-auto max-h-[calc(70vh-140px)] pr-4 scrollbar-thin">
+            <div className="space-y-2 md:space-y-3 overflow-y-auto max-h-[calc(75vh-80px)] md:max-h-[calc(70vh-140px)] pr-3 md:pr-4 scrollbar-thin">
               {gameLog.length === 0 ? (
-                <div className="text-gray-500 font-bold text-center py-10 uppercase tracking-widest opacity-40 italic">
+                <div className="text-gray-500 font-bold text-center py-8 md:py-10 uppercase tracking-widest opacity-40 italic text-xs md:text-sm">
                   No se detectan eventos recientes
                 </div>
               ) : (
                 gameLog.map((log, index) => (
-                  <div key={index} className="group/log relative pl-4 border-l-2 border-cyan-500/30 py-2 hover:bg-white/5 transition-colors rounded-r-lg">
-                    <div className="text-[10px] font-bold text-cyan-500/60 mb-1 font-mono uppercase">
+                  <div key={index} className="group/log relative pl-3 md:pl-4 border-l-2 border-cyan-500/30 py-1.5 md:py-2 hover:bg-white/5 transition-colors rounded-r-lg">
+                    <div className="text-[9px] md:text-[10px] font-bold text-cyan-500/60 mb-0.5 md:mb-1 font-mono uppercase">
                       [{log.split(': ')[0]}]
                     </div>
-                    <div className="text-sm text-gray-200 font-semibold leading-relaxed">
+                    <div className="text-xs md:text-sm text-gray-200 font-semibold leading-relaxed">
                       {log.split(': ').slice(1).join(': ')}
                     </div>
                   </div>
@@ -357,7 +375,7 @@ export default function RoomPage({ params }: RoomPageProps) {
         </div>
       )}
 
-      <div className="container mx-auto max-w-6xl p-2 md:p-3 relative z-10 flex-1 flex flex-col min-h-0">
+      <div className="container mx-auto max-w-6xl px-1.5 md:p-2 md:px-3 relative z-10 flex-1 flex flex-col min-h-0 overflow-y-auto pb-32 md:pb-40">
         <RoomHeader
           title={GAME_THEME.title}
           roomId={params.id}
@@ -365,27 +383,31 @@ export default function RoomPage({ params }: RoomPageProps) {
           isCurrentPlayer={isCurrentPlayer}
           actionsThisTurn={actionsThisTurn}
           uiLabels={UI_LABELS}
+          turnTimeRemaining={turnTimeRemaining}
+          turnTimeLimit={turnTimeLimit}
         />
 
 
 
         {/* Tableros de otros jugadores */}
-        <PlayerBoards
-          players={gameState.players}
-          currentPlayerId={currentPlayerId}
-          currentPlayer={currentPlayer}
-          isDragging={isDragging}
-          dragTargetColor={dragTargetColor}
-          validTargets={validTargets}
-          selectedCard={selectedCard}
-          handleOrganClick={handleOrganClick}
-          handleDropCard={handleDropCard}
-          handleDragOver={handleDragOver}
-          isSlotValid={isSlotValid}
-        />
+        <div className="mb-16 md:mb-16">
+          <PlayerBoards
+            players={gameState.players}
+            currentPlayerId={currentPlayerId}
+            currentPlayer={currentPlayer}
+            isDragging={isDragging}
+            dragTargetColor={dragTargetColor}
+            validTargets={validTargets}
+            selectedCard={selectedCard}
+            handleOrganClick={handleOrganClick}
+            handleDropCard={handleDropCard}
+            handleDragOver={handleDragOver}
+            isSlotValid={isSlotValid}
+          />
+        </div>
 
         {/* Tablero del jugador actual */}
-        <div className="mb-6">
+        <div className="mb-2 md:mb-4">
           {gameState.players.find((p) => p.id === currentPlayerId) && (
             <GameBoard
               player={gameState.players.find((p) => p.id === currentPlayerId)!}

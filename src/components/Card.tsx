@@ -1,8 +1,8 @@
 import { useState, useCallback, useMemo, useRef } from 'react';
 import Modal from './Modal';
 import type { Card } from '../game/types';
-import { CardType as CardTypeEnum } from '../game/types';
-import { SPACE_ICONS, CARD_TYPE_LABELS, TREATMENT_LABELS, TREATMENT_DESCRIPTIONS, SYSTEM_ICONS, COLOR_SYSTEM_LABELS } from '../game/theme';
+import { CardType as CardTypeEnum, Color } from '../game/types';
+import { CARD_TYPE_LABELS, TREATMENT_LABELS, TREATMENT_DESCRIPTIONS, COLOR_SYSTEM_LABELS, SYSTEM_SVG_ICONS, SvgIconVirus, SvgIconMedicine, SvgIconTreatment } from '../game/theme';
 
 interface CardProps {
   card: Card;
@@ -49,14 +49,14 @@ export default function Card({ card, onClick, onDragStart, onDragEnd, onDiscard,
 
     // Mapeo directo de colores a labels
     const colorToLabel: Record<string, string> = {
-      'RED': 'MOTOR',
-      '0': 'MOTOR',
+      'RED': 'ENERGÍA',
+      '0': 'ENERGÍA',
       'BLUE': 'OXÍGENO',
       '1': 'OXÍGENO',
-      'GREEN': 'NAVEGACIÓN',
-      '2': 'NAVEGACIÓN',
-      'YELLOW': 'ESCUDOS',
-      '3': 'ESCUDOS',
+      'GREEN': 'BIOSEGURIDAD',
+      '2': 'BIOSEGURIDAD',
+      'YELLOW': 'AGUA Y ALIMENTOS',
+      '3': 'AGUA Y ALIMENTOS',
       'MULTICOLOR': 'SISTEMA OPERATIVO',
       '4': 'SISTEMA OPERATIVO',
     };
@@ -64,20 +64,37 @@ export default function Card({ card, onClick, onDragStart, onDragEnd, onDiscard,
     const colorKey = card.color ? String(card.color).toUpperCase() : '';
     const systemLabel = colorKey ? (colorToLabel[colorKey] || COLOR_SYSTEM_LABELS[card.color as keyof typeof COLOR_SYSTEM_LABELS] || 'SISTEMA') : null;
 
-    // Icono principal según el tipo
+    // SVG Component según el tipo
+    const getMainIconComponent = () => {
+      switch (card.type as CardTypeEnum) {
+        case 'ORGAN':
+          if (!card.color) return null;
+          const SvgSystemIcon = SYSTEM_SVG_ICONS[card.color];
+          return SvgSystemIcon;
+        case 'VIRUS':
+          return SvgIconVirus;
+        case 'MEDICINE':
+          return SvgIconMedicine;
+        case 'TREATMENT':
+          return SvgIconTreatment;
+        default:
+          return null;
+      }
+    };
+
+    // Icono principal (fallback para modal text)
     const getMainIcon = () => {
       switch (card.type as CardTypeEnum) {
         case 'ORGAN':
-          return getSystemIcon();
+          return 'SISTEMA';
         case 'VIRUS':
-          return '☣️';
+          return 'SABOTAJE';
         case 'MEDICINE':
-          // Use the same icon as the system being repaired
-          return '🔧';
+          return 'REPARACIÓN';
         case 'TREATMENT':
-          return '⚡';
+          return 'ACCIÓN';
         default:
-          return '🎴';
+          return 'CARTA';
       }
     };
 
@@ -162,6 +179,7 @@ export default function Card({ card, onClick, onDragStart, onDragEnd, onDiscard,
     };
 
     const mainIcon = getMainIcon();
+    const MainIconComponent = getMainIconComponent();
     const subtitle = getSubtitle();
     // TREATMENT_LABELS ahora usa string keys directamente para evitar problemas de optimización en Vercel
     const treatmentLabel = card.treatmentType ? TREATMENT_LABELS[card.treatmentType] || null : null;
@@ -171,6 +189,7 @@ export default function Card({ card, onClick, onDragStart, onDragEnd, onDiscard,
 
     return {
       mainIcon,
+      MainIconComponent,
       subtitle,
       treatmentLabel,
       glowColor,
@@ -222,68 +241,71 @@ export default function Card({ card, onClick, onDragStart, onDragEnd, onDiscard,
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         className={`
-        relative w-[5.5rem] h-[7.8rem] rounded-xl flex flex-col justify-between
-        text-white select-none transition-all duration-300
-        ${selected ? 'ring-2 ring-cyan-400 scale-105' : ''}
+        relative w-[4.6rem] md:w-[6.2rem] h-[6.4rem] md:h-[8.8rem] rounded-lg md:rounded-xl flex flex-col justify-between
+        text-white select-none transition-all duration-200
+        ${selected ? 'ring-2 ring-cyan-400 scale-[1.02] md:scale-105' : ''}
         ${draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}
-        ${isHovered ? 'scale-[1.03] shadow-xl' : 'shadow-md'}
+        ${isHovered ? 'scale-[1.01] md:scale-[1.03] shadow-lg md:shadow-xl' : 'shadow-sm md:shadow-md'}
         ${card.color === 'MULTICOLOR' && card.type !== 'TREATMENT' ? 'multicolor-card' : ''}
         ${card.type === 'TREATMENT' ? 'action-card' : ''}
       `}
         style={card.color === 'MULTICOLOR' && card.type !== 'TREATMENT' ? {} : {
-          background: `linear-gradient(145deg, #111827 0%, #1f2937 100%)`,
-          border: `2px solid rgba(${cardData.glowColor}, 0.8)`,
-          boxShadow: isHovered ? `0 0 25px rgba(${cardData.glowColor}, 0.5)` : `0 0 10px rgba(${cardData.glowColor}, 0.25)`,
+          background: `linear-gradient(145deg, #1e293b 0%, #0f172a 100%)`,
+          border: `1.5px solid rgba(${cardData.glowColor}, 0.5)`,
+          boxShadow: isHovered ? `0 0 12px rgba(${cardData.glowColor}, 0.25)` : `0 0 6px rgba(${cardData.glowColor}, 0.15)`,
         }}
       >
         {/* Header */}
-        <div className="flex justify-between items-center px-2 pt-2 gap-1">
-          <span className="text-[7px] font-bold uppercase tracking-widest text-white/60 truncate max-w-[3rem]">
-            {/* {cardData.typeBadgeLabel} */}
-          </span>
-          <div className="flex gap-1 flex-shrink-0">
+        <div className="flex justify-between items-center px-1.5 md:px-2 pt-1.5 md:pt-2">
+          <button
+            onClick={handleOpenModal}
+            className="w-4 h-4 md:w-5 md:h-5 rounded-md md:rounded-full bg-white/10 hover:bg-white/20 text-[10px] md:text-xs flex items-center justify-center transition-colors flex-shrink-0 pointer-events-auto active:scale-90"
+            style={{ color: `rgb(${cardData.glowColor})` }}
+            title="Ver detalles"
+            type="button"
+          >
+            ?
+          </button>
+          {onDiscard && (
             <button
-              onClick={handleOpenModal}
-              className="w-5 h-5 rounded-full bg-white/10 hover:bg-white/20 text-xs flex items-center justify-center transition-colors flex-shrink-0 pointer-events-auto"
-              style={{ color: `rgb(${cardData.glowColor})` }}
-              title="Ver detalles"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                e.nativeEvent.stopImmediatePropagation();
+                onDiscard();
+              }}
+              className="w-4 h-4 md:w-5 md:h-5 rounded-md md:rounded-full bg-red-900/50 hover:bg-red-800/70 text-red-400 text-[10px] md:text-xs flex items-center justify-center transition-colors flex-shrink-0 pointer-events-auto active:scale-90"
+              title="Descartar"
               type="button"
             >
-              ?
+              ✕
             </button>
-            {onDiscard && (
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  e.nativeEvent.stopImmediatePropagation();
-                  onDiscard();
-                }}
-                className="w-5 h-5 rounded-full bg-red-900/50 hover:bg-red-800/70 text-red-400 text-xs flex items-center justify-center transition-colors flex-shrink-0 pointer-events-auto"
-                title="Descartar"
-                type="button"
-              >
-                ✕
-              </button>
-            )}
-          </div>
+          )}
         </div>
 
         {/* Icono central */}
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-5xl drop-shadow-lg">{cardData.mainIcon}</div>
+        {/* Icono central - Ajustado para no invadir el espacio */}
+        <div className="flex-1 flex items-center justify-center min-h-0"> {/* min-h-0 ayuda a flexbox a no expandirse */}
+          {cardData.MainIconComponent ? (
+            <cardData.MainIconComponent
+              className="w-8 h-8 md:w-12 md:h-12 drop-shadow-lg"
+              style={{ color: `rgb(${cardData.glowColor})` }}
+            />
+          ) : (
+            <div className="text-2xl md:text-4xl drop-shadow-lg">{cardData.mainIcon}</div>
+          )}
         </div>
 
-        {/* Footer */}
-        <div className="text-center pb-2 px-2">
+        {/* Footer - Con límites de altura y desborde */}
+        <div className="text-center pb-1.5 md:pb-2 px-1 flex flex-col justify-end h-8 md:h-10">
           {cardData.subtitle && (
-            <div className="text-[10px] md:text-[8px] text-white/70 uppercase tracking-wide leading-tight">
+            <div className="text-[7px] md:text-[9px] text-white/80 uppercase tracking-tighter leading-none font-medium break-words line-clamp-2">
               {cardData.subtitle}
             </div>
           )}
           {cardData.treatmentLabel && (
             <div
-              className="text-[9px] md:text-[7px] mt-0.5 font-bold leading-tight"
+              className="text-[6px] md:text-[8px] mt-0.5 font-bold leading-none truncate"
               style={{ color: `rgb(${cardData.glowColor})` }}
             >
               {cardData.treatmentLabel}
@@ -312,7 +334,13 @@ export default function Card({ card, onClick, onDragStart, onDragEnd, onDiscard,
               {cardData.typeBadgeLabel}
             </div>
             <div className="flex-1 flex items-center justify-center">
-              <div className="text-7xl drop-shadow-2xl">{cardData.mainIcon}</div>
+              {cardData.MainIconComponent ? (
+                <div className="text-7xl drop-shadow-2xl" style={{ color: `rgb(${cardData.glowColor})` }}>
+                  <cardData.MainIconComponent className="w-full h-full" />
+                </div>
+              ) : (
+                <div className="text-7xl drop-shadow-2xl">{cardData.mainIcon}</div>
+              )}
             </div>
             <div className="text-center">
               {cardData.subtitle && (

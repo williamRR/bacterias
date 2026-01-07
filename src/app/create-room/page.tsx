@@ -12,6 +12,7 @@ export default function CreateRoom() {
   const [createdRoomId, setCreatedRoomId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState(false);
+  const [turnTimeLimit, setTurnTimeLimit] = useState<number | null>(null); // null = sin límite
 
   // Generar o recuperar un ID único para este navegador (persistente)
   const getBrowserId = () => {
@@ -101,7 +102,7 @@ export default function CreateRoom() {
 
     setLoading(true);
     localStorage.setItem('playerName', playerName);
-    socket?.emit('create-room', { playerName, browserId: getBrowserId() });
+    socket?.emit('create-room', { playerName, browserId: getBrowserId(), turnTimeLimit });
   };
 
   const handleJoinRoom = () => {
@@ -170,6 +171,36 @@ export default function CreateRoom() {
                     placeholder="Tu nombre de código..."
                   />
                   <div className="absolute right-5 top-1/2 -translate-y-1/2 text-2xl opacity-50 group-focus-within:opacity-100 transition-opacity">👤</div>
+                </div>
+              </div>
+
+              {/* Selector de límite de tiempo */}
+              <div className="space-y-4">
+                <label className="block text-cyan-300 font-bold text-sm tracking-widest uppercase">
+                  ⏱️ Límite de Tiempo por Turno
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { value: null, label: 'Sin Límite', desc: 'Juego relajado' },
+                    { value: 30, label: '30s', desc: 'Relax' },
+                    { value: 15, label: '15s', desc: 'Normal' },
+                    { value: 10, label: '10s', desc: 'Rápido' },
+                    { value: 5, label: '5s', desc: 'Blitz' },
+                  ].map((option) => (
+                    <button
+                      key={option.label}
+                      type="button"
+                      onClick={() => setTurnTimeLimit(option.value)}
+                      className={`px-3 py-3 rounded-xl text-center transition-all border-2 ${
+                        turnTimeLimit === option.value
+                          ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 scale-105'
+                          : 'bg-slate-800/40 border-slate-700/50 text-slate-400 hover:border-slate-600 hover:bg-slate-700/40'
+                      }`}
+                    >
+                      <div className="font-black text-lg">{option.label}</div>
+                      <div className="text-[10px] opacity-70 uppercase tracking-wider">{option.desc}</div>
+                    </button>
+                  ))}
                 </div>
               </div>
 

@@ -16,7 +16,10 @@
     "simulate": "tsx src/simulator/run-simulation.ts",
     "simulate:quick": "tsx src/simulator/run-simulation.ts --count 1000 --verbose",
     "simulate:debug": "tsx src/simulator/run-simulation.ts --count 100 --verbose",
-    "analyze:deck": "tsx src/simulator/analyze-deck.ts"
+    "analyze:deck": "tsx src/simulator/analyze-deck.ts",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "dependencies": {
     "driver.js": "^1.4.0",
