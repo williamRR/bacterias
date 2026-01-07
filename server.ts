@@ -2,7 +2,7 @@ import { createServer } from 'http';
 import { parse } from 'url';
 import next from 'next';
 import { Server as ServerIO } from 'socket.io';
-import { createRoom, joinRoom, startGame, getRoomPlayers, getRoom, rooms } from './src/server/rooms';
+import { createRoom, joinRoom, startGame, getRoomPlayers, getRoom, rooms, cancelPlayerDeletion } from './src/server/rooms';
 import { handleGameAction, setIOInstance } from './src/server/game-manager';
 import { gameLogger } from './src/game/logger';
 
@@ -83,6 +83,9 @@ app.prepare().then(() => {
       const isReconnecting = room && room.players.has(playerId);
 
       if (isReconnecting) {
+        // Cancelar la eliminación programada del jugador
+        cancelPlayerDeletion(playerId);
+
         // No hacer nada más, el jugador ya está en la sala con sus datos
         socket.join(roomId);
 

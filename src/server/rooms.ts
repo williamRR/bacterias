@@ -14,6 +14,9 @@ interface Room {
 
 const rooms = new Map<string, Room>();
 
+// Timeouts de desconexión pendientes (para permitir reconexión)
+const disconnectTimeouts = new Map<string, NodeJS.Timeout>();
+
 function createRoom(roomId: string, playerId: string, playerName: string): Room {
   const room: Room = {
     id: roomId,
@@ -133,41 +136,63 @@ function getRoomPlayers(roomId: string): Player[] {
 }
 
 function deletePlayerFromRoom(playerId: string): void {
-  // Buscar el jugador en todas las salas y eliminarlo
-  const roomsArray = Array.from(rooms.entries());
-  for (const [roomId, room] of roomsArray) {
-    if (room.players.has(playerId)) {
-      const logger = getGameLogger(roomId);
-      const player = room.players.get(playerId);
-      const playerName = player?.name || playerId;
+  // Cancelar cualquier timeout previo para este jugador
+  const existingTimeout = disconnectTimeouts.get(playerId);
+  if (existingTimeout) {
+    clearTimeout(existingTimeout);
+  }
 
-      room.players.delete(playerId);
-      logger.logPlayerLeft(playerName, playerId);
+  // Programar la eliminación después de 5 segundos para permitir reconexión
+  const timeout = setTimeout(() => {
+    // Buscar el jugador en todas las salas y eliminarlo
+    const roomsArray = Array.from(rooms.entries());
+    for (const [roomId, room] of roomsArray) {
+      if (room.players.has(playerId)) {
+        const logger = getGameLogger(roomId);
+        const player = room.players.get(playerId);
+        const playerName = player?.name || playerId;
 
-      // Si la sala se queda vacía, marcarla para eliminación después de 5 minutos
-      if (room.players.size === 0) {
-        room.emptySince = Date.now();
-        // Programar eliminación después de 5 minutos (300000 ms)
-        setTimeout(() => {
-          const currentRoom = rooms.get(roomId);
-          if (currentRoom && currentRoom.emptySince && currentRoom.players.size === 0) {
-            const timeSinceEmpty = Date.now() - currentRoom.emptySince;
-            if (timeSinceEmpty >= 300000) {
-              rooms.delete(roomId);
-              removeGameLogger(roomId);
+        room.players.delete(playerId);
+        logger.logPlayerLeft(playerName, playerId);
+
+        // Si la sala se queda vacía, marcarla para eliminación después de 5 minutos
+        if (room.players.size === 0) {
+          room.emptySince = Date.now();
+          // Programar eliminación después de 5 minutos (300000 ms)
+          setTimeout(() => {
+            const currentRoom = rooms.get(roomId);
+            if (currentRoom && currentRoom.emptySince && currentRoom.players.size === 0) {
+              const timeSinceEmpty = Date.now() - currentRoom.emptySince;
+              if (timeSinceEmpty >= 300000) {
+                rooms.delete(roomId);
+                removeGameLogger(roomId);
+              }
             }
+          }, 300000);
+        } else {
+          // Notificar a los demás jugadores que alguien salió
+          const io = (global as any).io;
+          if (io) {
+            io.to(roomId).emit('player-left', { playerId, players: getRoomPlayers(roomId) });
           }
-        }, 300000);
-      } else {
-        // Notificar a los demás jugadores que alguien salió
-        const io = (global as any).io;
-        if (io) {
-          io.to(roomId).emit('player-left', { playerId, players: getRoomPlayers(roomId) });
         }
+        break;
       }
-      break;
     }
+    // Limpiar el timeout después de ejecutar
+    disconnectTimeouts.delete(playerId);
+  }, 5000); // 5 segundos de espera para reconexión
+
+  disconnectTimeouts.set(playerId, timeout);
+}
+
+// Cancelar la eliminación de un jugador (cuando se reconecta)
+function cancelPlayerDeletion(playerId: string): void {
+  const timeout = disconnectTimeouts.get(playerId);
+  if (timeout) {
+    clearTimeout(timeout);
+    disconnectTimeouts.delete(playerId);
   }
 }
 
-export { createRoom, joinRoom, startGame, getRoom, deleteRoom, getRoomPlayers, deletePlayerFromRoom, rooms };
+export { createRoom, joinRoom, startGame, getRoom, deleteRoom, getRoomPlayers, deletePlayerFromRoom, cancelPlayerDeletion, rooms };
