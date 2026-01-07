@@ -33,7 +33,7 @@ app.prepare().then(() => {
         return;
       }
 
-      // Health check endpoint para Railway
+      // Healthcheck endpoint para Railway
       if (req.url === '/api/health') {
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify({ status: 'healthy', timestamp: new Date().toISOString() }));
