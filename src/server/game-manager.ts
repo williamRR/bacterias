@@ -92,15 +92,15 @@ function handleTreatmentCard(roomId: string, player: Player, targetPlayer: Playe
   const logger = getGameLogger(roomId);
 
   switch (card.treatmentType) {
-    case TreatmentType.ENERGY_TRANSFER: {
-      console.log('🔍 ENERGY_TRANSFER - Inicio');
+    case TreatmentType.DERIVACION_ENERGIA: {
+      console.log('🔍 DERIVACION_ENERGIA - Inicio');
       console.log('🔍 Action params:', { sourcePlayerId, sourceColor, targetColor, targetPlayer: targetPlayer.name });
 
       // Mueve un virus o medicina de un sistema a otro del mismo color
       const srcColor = sourceColor || targetColor;
       const sourcePlayer = sourcePlayerId ? gameState.players.find(p => p.id === sourcePlayerId) : targetPlayer;
       if (!sourcePlayer) {
-        console.log('❌ ENERGY_TRANSFER - Fallo: sourcePlayer no encontrado');
+        console.log('❌ DERIVACION_ENERGIA - Fallo: sourcePlayer no encontrado');
         return false;
       }
 
@@ -118,24 +118,24 @@ function handleTreatmentCard(roomId: string, player: Player, targetPlayer: Playe
       // VALIDACIÓN: Ambos slots deben tener órganos instalados
       // No puedes transferir a un sistema que no existe
       if (!sourceSlot.organCard) {
-        console.log('❌ ENERGY_TRANSFER - Fallo: slot origen no tiene órgano');
+        console.log('❌ DERIVACION_ENERGIA - Fallo: slot origen no tiene órgano');
         return false;
       }
       if (!destSlot.organCard) {
-        console.log('❌ ENERGY_TRANSFER - Fallo: slot destino no tiene órgano');
+        console.log('❌ DERIVACION_ENERGIA - Fallo: slot destino no tiene órgano');
         return false;
       }
 
       // Validar que source y target sean diferentes
       const isSameSlot = sourcePlayer.id === targetPlayer.id && srcColor === targetColor;
       if (isSameSlot) {
-        console.log('❌ ENERGY_TRANSFER - Fallo: mismo slot');
+        console.log('❌ DERIVACION_ENERGIA - Fallo: mismo slot');
         return false;
       }
 
       // Validar que haya cartas para mover
       if (sourceSlot.virusCards.length === 0 && sourceSlot.medicineCards.length === 0) {
-        console.log('❌ ENERGY_TRANSFER - Fallo: no hay cartas para mover');
+        console.log('❌ DERIVACION_ENERGIA - Fallo: no hay cartas para mover');
         return false;
       }
 
@@ -149,7 +149,7 @@ function handleTreatmentCard(roomId: string, player: Player, targetPlayer: Playe
       } else if (sourceSlot.medicineCards.length > 0) {
         // VALIDACIÓN: El destino no puede tener más de 2 medicinas
         if (destSlot.medicineCards.length >= 2) {
-          console.log('❌ ENERGY_TRANSFER - Fallo: destino ya tiene 2 medicinas (máximo BLINDADO)');
+          console.log('❌ DERIVACION_ENERGIA - Fallo: destino ya tiene 2 medicinas (máximo BLINDADO)');
           return false;
         }
         const medicine = sourceSlot.medicineCards.pop()!;
@@ -162,44 +162,47 @@ function handleTreatmentCard(roomId: string, player: Player, targetPlayer: Playe
         const systemName = COLOR_SYSTEM_LABELS[srcColor];
         sendNotificationToPlayer(roomId, sourcePlayer.id, `⚡ TRANSFERENCIA: Se movió avería/mejora de tu ${systemName} al ${systemName} de ${targetPlayer.name}`, 'info');
         sendNotificationToPlayer(roomId, targetPlayer.id, `⚡ TRANSFERENCIA: Recibiste avería/mejora en tu ${systemName} de ${sourcePlayer.name}`, 'info');
-        logger.logTreatmentCard(player.name, 'ENERGY_TRANSFER', `${sourcePlayer.name} → ${targetPlayer.name}`);
-        console.log('✅ ENERGY_TRANSFER - Completado con éxito');
+        logger.logTreatmentCard(player.name, 'DERIVACION_ENERGIA', `${sourcePlayer.name} → ${targetPlayer.name}`);
+        console.log('✅ DERIVACION_ENERGIA - Completado con éxito');
       }
       return moved;
     }
 
-    case TreatmentType.EMERGENCY_DECOMPRESSION: {
-      // Regresa un módulo rival a SU mano, descarta cartas unidas, rival descarta 1 carta más
+    case TreatmentType.BRECHA_CASCO: {
+      // Devuelve un sistema rival a SU mano, descarta cartas unidas
       const targetSlot = getPlayerSlot(targetPlayer, targetColor);
 
       if (!targetSlot?.organCard) return false;
 
-      // El órgano vuelve a la mano del RIVAL (targetPlayer)
-      targetPlayer.hand.push(targetSlot.organCard);
+      // Guardar referencias ANTES de limpiar el slot
+      const organCard = targetSlot.organCard;
+      const virusToDiscard = [...targetSlot.virusCards];
+      const medicineToDiscard = [...targetSlot.medicineCards];
+
+      // Limpiar el slot y poner el órgano en la mano del dueño
+      clearSlot(targetSlot);
+      targetPlayer.hand.push(organCard);
 
       // Descartar virus y medicinas unidas
-      gameState.discardPile.push(...targetSlot.virusCards);
-      gameState.discardPile.push(...targetSlot.medicineCards);
+      gameState.discardPile.push(...virusToDiscard);
+      gameState.discardPile.push(...medicineToDiscard);
 
-      // Limpiar el slot
-      clearSlot(targetSlot);
-
-      // El rival descarta 1 carta adicional de su mano
-      if (targetPlayer.hand.length > 0) {
-        // Descartar la última carta (que podría ser el órgano que acabamos de agregar o una existente)
-        // Para ser más predecible, descartamos la primera carta de la mano
-        const discardedIndex = 0; // Primera carta
-        const discardedCard = targetPlayer.hand.splice(discardedIndex, 1)[0];
-        gameState.discardPile.push(discardedCard);
+      // Si el propietario ahora tiene más de 3 cartas, descartar al azar
+      const discardedCount = targetPlayer.hand.length - 3;
+      if (discardedCount > 0) {
+        const handSizeBefore = targetPlayer.hand.length;
+        discardRandomCardToLimit(targetPlayer, gameState, 3);
+        const actualDiscarded = handSizeBefore - targetPlayer.hand.length;
+        sendNotificationToPlayer(roomId, targetPlayer.id, `⚠️ Exceso de cartas: ${actualDiscarded} carta(s) descartada(s) al azar`, 'warning');
       }
 
-      sendNotificationToPlayer(roomId, targetPlayer.id, `⚠️ ${player.name} usó ${TREATMENT_LABELS[TreatmentType.EMERGENCY_DECOMPRESSION]}: ¡Tu sistema fue regresado a tu mano y perdiste las mejoras!`, 'warning');
-      sendNotificationToPlayer(roomId, player.id, `✅ ${TREATMENT_LABELS[TreatmentType.EMERGENCY_DECOMPRESSION]}: El sistema de ${targetPlayer.name} regresó a su mano`, 'success');
-      logger.logTreatmentCard(player.name, 'EMERGENCY_DECOMPRESSION', targetPlayer.name);
+      sendNotificationToPlayer(roomId, targetPlayer.id, `⚠️ ${player.name} usó ${TREATMENT_LABELS[TreatmentType.BRECHA_CASCO]}: ¡Tu sistema regresó a tu mano y perdiste las mejoras!`, 'warning');
+      sendNotificationToPlayer(roomId, player.id, `✅ ${TREATMENT_LABELS[TreatmentType.BRECHA_CASCO]}: El sistema de ${targetPlayer.name} regresó a su mano`, 'success');
+      logger.logTreatmentCard(player.name, 'BRECHA_CASCO', targetPlayer.name);
       return true;
     }
 
-    case TreatmentType.DATA_PIRACY: {
+    case TreatmentType.INTRUSION: {
       // Roba un módulo de un oponente (con sus cartas unidas)
       const targetSlot = getPlayerSlot(targetPlayer, targetColor);
       const playerSlot = getPlayerSlot(player, targetColor);
@@ -211,31 +214,31 @@ function handleTreatmentCard(roomId: string, player: Player, targetPlayer: Playe
       if (playerSlot) {
         transferSlotContents(targetSlot, playerSlot);
         clearSlot(targetSlot);
-        logger.logTreatmentCard(player.name, 'DATA_PIRACY', targetPlayer.name);
+        logger.logTreatmentCard(player.name, 'INTRUSION', targetPlayer.name);
       }
       return true;
     }
 
-    case TreatmentType.QUANTUM_DESYNC: {
+    case TreatmentType.INTERFERENCIA: {
       // El oponente objetivo descarta una carta de su mano
       if (targetPlayer.hand.length > 0) {
         const discardedCard = targetPlayer.hand.pop()!;
         gameState.discardPile.push(discardedCard);
-        sendNotificationToPlayer(roomId, targetPlayer.id, `⚡ ${player.name} usó ${TREATMENT_LABELS[TreatmentType.QUANTUM_DESYNC]}: ¡Has perdido una carta!`, 'warning');
-        logger.logTreatmentCard(player.name, 'QUANTUM_DESYNC', targetPlayer.name);
+        sendNotificationToPlayer(roomId, targetPlayer.id, `⚡ ${player.name} usó ${TREATMENT_LABELS[TreatmentType.INTERFERENCIA]}: ¡Has perdido una carta!`, 'warning');
+        logger.logTreatmentCard(player.name, 'INTERFERENCIA', targetPlayer.name);
         return true;
       }
       return false;
     }
 
-    case TreatmentType.PROTOCOL_ERROR: {
-      console.log('🔍 PROTOCOL_ERROR - Inicio');
+    case TreatmentType.REPARACION_EMERGENCIA: {
+      console.log('🔍 REPARACION_EMERGENCIA - Inicio');
       console.log('🔍 Jugador:', player.name, 'Mano antes:', player.hand.map(c => `${c.type}-${c.color}`));
       console.log('🔍 TargetPlayer:', targetPlayer.name, 'TargetColor:', targetColor);
 
       // Descarta una carta de tu mano para descartar un virus objetivo
       if (player.hand.length === 0) {
-        console.log('❌ PROTOCOL_ERROR - Fallo: mano vacía');
+        console.log('❌ REPARACION_EMERGENCIA - Fallo: mano vacía');
         return false;
       }
 
@@ -243,7 +246,7 @@ function handleTreatmentCard(roomId: string, player: Player, targetPlayer: Playe
       console.log('🔍 TargetSlot:', targetSlot ? 'existe' : 'NO existe', 'Virus:', targetSlot?.virusCards.length || 0);
 
       if (!targetSlot || targetSlot.virusCards.length === 0) {
-        console.log('❌ PROTOCOL_ERROR - Fallo: no hay virus objetivo');
+        console.log('❌ REPARACION_EMERGENCIA - Fallo: no hay virus objetivo');
         return false;
       }
 
@@ -267,54 +270,56 @@ function handleTreatmentCard(roomId: string, player: Player, targetPlayer: Playe
       if (player.id !== targetPlayer.id) {
         sendNotificationToPlayer(roomId, targetPlayer.id, `⚠️ ${player.name} usó ERROR DE PROTOCOLO en tu sistema ${systemName}`, 'warning');
       }
-      logger.logTreatmentCard(player.name, 'PROTOCOL_ERROR', targetPlayer.name);
-      console.log('✅ PROTOCOL_ERROR - Completado con éxito');
+      logger.logTreatmentCard(player.name, 'REPARACION_EMERGENCIA', targetPlayer.name);
+      console.log('✅ REPARACION_EMERGENCIA - Completado con éxito');
       return true;
     }
 
-    case TreatmentType.SINGULARITY: {
+    case TreatmentType.REDISTRIBUCION: {
       // Intercambia todos los sistemas entre dos jugadores
-      console.log('🔍 SINGULARITY - Buscando segundo jugador ID:', secondTargetPlayerId);
+      console.log('🔍 REDISTRIBUCION - Buscando segundo jugador ID:', secondTargetPlayerId);
       const secondTargetPlayer = gameState.players.find(p => p.id === secondTargetPlayerId);
-      console.log('🔍 SINGULARITY - Jugadores en juego:', gameState.players.map(p => `${p.name} (${p.id})`));
-      console.log('🔍 SINGULARITY - targetPlayer:', targetPlayer.name, `(${targetPlayer.id})`);
-      console.log('🔍 SINGULARITY - secondTargetPlayer:', secondTargetPlayer?.name || 'NOT FOUND');
+      console.log('🔍 REDISTRIBUCION - Jugadores en juego:', gameState.players.map(p => `${p.name} (${p.id})`));
+      console.log('🔍 REDISTRIBUCION - targetPlayer:', targetPlayer.name, `(${targetPlayer.id})`);
+      console.log('🔍 REDISTRIBUCION - secondTargetPlayer:', secondTargetPlayer?.name || 'NOT FOUND');
 
       if (!secondTargetPlayer) {
-        console.log('❌ SINGULARITY - Fallo: secondTargetPlayer no encontrado');
+        console.log('❌ REDISTRIBUCION - Fallo: secondTargetPlayer no encontrado');
         return false;
       }
 
       swapPlayerBodies(targetPlayer, secondTargetPlayer);
 
-      sendNotificationToPlayer(roomId, targetPlayer.id, `🌀 SINGULARIDAD: ¡Tus sistemas han sido intercambiados con ${secondTargetPlayer.name}!`, 'warning');
-      sendNotificationToPlayer(roomId, secondTargetPlayer.id, `🌀 SINGULARIDAD: ¡Tus sistemas han sido intercambiados con ${targetPlayer.name}!`, 'warning');
-      logger.logTreatmentCard(player.name, 'SINGULARITY', `${targetPlayer.name} ↔ ${secondTargetPlayer.name}`);
+      sendNotificationToPlayer(roomId, targetPlayer.id, `🌀 REDISTRIBUCIÓN: ¡Tus sistemas han sido intercambiados con ${secondTargetPlayer.name}!`, 'warning');
+      sendNotificationToPlayer(roomId, secondTargetPlayer.id, `🌀 REDISTRIBUCIÓN: ¡Tus sistemas han sido intercambiados con ${targetPlayer.name}!`, 'warning');
+      logger.logTreatmentCard(player.name, 'REDISTRIBUCION', `${targetPlayer.name} ↔ ${secondTargetPlayer.name}`);
       return true;
     }
 
-    case TreatmentType.EVENT_HORIZON: {
-      // Todos los oponentes descartan su mano completa
-      gameState.players.filter(p => p.id !== player.id).forEach(p => {
-        gameState.discardPile.push(...p.hand);
-        p.hand = [];
-        sendNotificationToPlayer(roomId, p.id, `⚡ ${player.name} usó ${TREATMENT_LABELS[TreatmentType.EVENT_HORIZON]}: ¡Has perdido todas tus cartas!`, 'warning');
+    case TreatmentType.COLAPSO_SISTEMICO: {
+      // SOLO los RIVALES descartan su mano completa (no el jugador que jugó la carta)
+      gameState.players.forEach(p => {
+        if (p.id !== player.id) {
+          gameState.discardPile.push(...p.hand);
+          p.hand = [];
+          sendNotificationToPlayer(roomId, p.id, `☠️ ${player.name} usó ${TREATMENT_LABELS[TreatmentType.COLAPSO_SISTEMICO]}: ¡Has perdido todas tus cartas!`, 'warning');
+        }
       });
-      logger.logTreatmentCard(player.name, 'EVENT_HORIZON');
+      logger.logTreatmentCard(player.name, 'COLAPSO_SISTEMICO');
       return true;
     }
 
-    case TreatmentType.BACKUP_SYSTEM: {
-      console.log('🔍 BACKUP_SYSTEM - Inicio');
-      console.log('🔍 BACKUP_SYSTEM - Descarte tiene', gameState.discardPile.length, 'cartas');
-      console.log('🔍 BACKUP_SYSTEM - Órganos en descarte:', gameState.discardPile.filter(c => c.type === CardType.ORGAN).map(c => c.color));
+    case TreatmentType.RECUPERACION: {
+      console.log('🔍 RECUPERACION - Inicio');
+      console.log('🔍 RECUPERACION - Descarte tiene', gameState.discardPile.length, 'cartas');
+      console.log('🔍 RECUPERACION - Órganos en descarte:', gameState.discardPile.filter(c => c.type === CardType.ORGAN).map(c => c.color));
 
       // Recupera un órgano destruido del descarte y lo coloca en el slot
       const targetSlot = getPlayerSlot(player, targetColor);
 
       // Solo puede recuperar en slots vacíos (donde había un órgano destruido)
       if (targetSlot?.organCard) {
-        console.log('❌ BACKUP_SYSTEM - Slot no vacío');
+        console.log('❌ RECUPERACION - Slot no vacío');
         return false;
       }
 
@@ -324,10 +329,10 @@ function handleTreatmentCard(roomId: string, player: Player, targetPlayer: Playe
         (c.color === targetColor || c.color === Color.MULTICOLOR)
       );
 
-      console.log('🔍 BACKUP_SYSTEM - Buscando', targetColor, 'ó MULTICOLOR. Índice:', organIndex);
+      console.log('🔍 RECUPERACION - Buscando', targetColor, 'ó MULTICOLOR. Índice:', organIndex);
 
       if (organIndex === -1) {
-        console.log('❌ BACKUP_SYSTEM - No se encontró órgano');
+        console.log('❌ RECUPERACION - No se encontró órgano');
         return false;
       }
 
@@ -335,9 +340,9 @@ function handleTreatmentCard(roomId: string, player: Player, targetPlayer: Playe
       const organ = gameState.discardPile.splice(organIndex, 1)[0];
       targetSlot!.organCard = organ;
 
-      console.log('✅ BACKUP_SYSTEM - Órgano recuperado:', organ.color);
-      sendNotificationToPlayer(roomId, player.id, `💾 SISTEMA DE RESPALDO: ¡Recuperaste un ${COLOR_SYSTEM_LABELS[targetColor]} del descarte!`, 'success');
-      logger.logTreatmentCard(player.name, 'BACKUP_SYSTEM', targetColor);
+      console.log('✅ RECUPERACION - Órgano recuperado:', organ.color);
+      sendNotificationToPlayer(roomId, player.id, `💾 RECUPERACIÓN: ¡Recuperaste un ${COLOR_SYSTEM_LABELS[targetColor]} del descarte!`, 'success');
+      logger.logTreatmentCard(player.name, 'RECUPERACION', targetColor);
       return true;
     }
 
@@ -376,11 +381,8 @@ export function handleGameAction(roomId: string, playerId: string, action: any):
           if (success) {
             // playCard quita la carta de la mano
             playCard(gameState, player, card);
-            // NOTA: PROTOCOL_ERROR maneja su propio descarte internamente
-            // Las otras cartas de tratamiento van al descarte aquí
-            if (card.treatmentType !== 'PROTOCOL_ERROR') {
-              gameState.discardPile.push(card);
-            }
+            // Todas las cartas de tratamiento van al descarte aquí
+            gameState.discardPile.push(card);
             const narration = getCardActionMessage(card, player.name, targetPlayer.name, targetColor);
             broadcastNarration(roomId, narration);
 
@@ -484,28 +486,44 @@ function getCardActionMessage(card: Card, playerName: string, targetPlayerName: 
     return `${playerName} reparó el sistema ${systemName} de ${targetPlayerName}`;
   }
   if (card.type === 'TREATMENT') {
-    if (card.treatmentType === TreatmentType.ENERGY_TRANSFER) {
+    if (card.treatmentType === TreatmentType.DERIVACION_ENERGIA) {
       return `${playerName} transfirió energía del sistema ${systemName} de ${targetPlayerName}`;
     }
-    if (card.treatmentType === TreatmentType.EMERGENCY_DECOMPRESSION) {
+    if (card.treatmentType === TreatmentType.BRECHA_CASCO) {
       return `${playerName} descomprimió el sistema ${systemName} de ${targetPlayerName}`;
     }
-    if (card.treatmentType === TreatmentType.DATA_PIRACY) {
+    if (card.treatmentType === TreatmentType.INTRUSION) {
       return `${playerName} pirateó el sistema ${systemName} de ${targetPlayerName}`;
     }
-    if (card.treatmentType === TreatmentType.QUANTUM_DESYNC) {
-      return `${playerName} desincronizó cuánticamente a ${targetPlayerName}`;
+    if (card.treatmentType === TreatmentType.INTERFERENCIA) {
+      return `${playerName} interfirió las comunicaciones de ${targetPlayerName}`;
     }
-    if (card.treatmentType === TreatmentType.PROTOCOL_ERROR) {
-      return `${playerName} provocó un error de protocolo en el sistema ${systemName} de ${targetPlayerName}`;
+    if (card.treatmentType === TreatmentType.REPARACION_EMERGENCIA) {
+      return `${playerName} realizó una reparación de emergencia en el sistema ${systemName} de ${targetPlayerName}`;
     }
-    if (card.treatmentType === TreatmentType.SINGULARITY) {
-      return `${playerName} activó una SINGULARIDAD`;
+    if (card.treatmentType === TreatmentType.REDISTRIBUCION) {
+      return `${playerName} activó una REDISTRIBUCIÓN`;
     }
-    if (card.treatmentType === TreatmentType.EVENT_HORIZON) {
-      return `${playerName} activó el HORIZONTE DE SUCESOS`;
+    if (card.treatmentType === TreatmentType.COLAPSO_SISTEMICO) {
+      return `${playerName} provocó un COLAPSO SISTÉMICO`;
+    }
+    if (card.treatmentType === TreatmentType.RECUPERACION) {
+      return `${playerName} recuperó un sistema del descarte`;
     }
   }
 
   return `${playerName} jugó una carta`;
+}
+
+/**
+ * Descarta cartas al azar de la mano del jugador hasta que tenga máximo MAX_HAND_SIZE cartas.
+ * Las cartas descartadas van al pile de descarte.
+ */
+function discardRandomCardToLimit(player: Player, gameState: GameState, maxHandSize: number = 3): void {
+  while (player.hand.length > maxHandSize) {
+    // Elegir índice aleatorio
+    const randomIndex = Math.floor(Math.random() * player.hand.length);
+    const discardedCard = player.hand.splice(randomIndex, 1)[0];
+    gameState.discardPile.push(discardedCard);
+  }
 }

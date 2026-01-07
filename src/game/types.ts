@@ -3,7 +3,8 @@ enum Color {
   BLUE = 'BLUE',
   GREEN = 'GREEN',
   YELLOW = 'YELLOW',
-  MULTICOLOR = 'MULTICOLOR'
+  MULTICOLOR = 'MULTICOLOR',
+  PURPLE = 'PURPLE'  // Para cartas de ACCIÓN (TREATMENT)
 }
 
 enum CardType {
@@ -22,15 +23,15 @@ enum OrganState {
 }
 
 enum TreatmentType {
-  // Nuevas cartas de acción
-  ENERGY_TRANSFER = 'ENERGY_TRANSFER',
-  EMERGENCY_DECOMPRESSION = 'EMERGENCY_DECOMPRESSION',
-  DATA_PIRACY = 'DATA_PIRACY',
-  QUANTUM_DESYNC = 'QUANTUM_DESYNC',
-  PROTOCOL_ERROR = 'PROTOCOL_ERROR',
-  SINGULARITY = 'SINGULARITY',
-  EVENT_HORIZON = 'EVENT_HORIZON',
-  BACKUP_SYSTEM = 'BACKUP_SYSTEM',  // Nueva: Recupera un órgano destruido del descarte
+  // Cartas de acción actualizadas
+  DERIVACION_ENERGIA = 'DERIVACION_ENERGIA',      // ⚡ Mueve una reparación/sabotaje entre sistemas del mismo color
+  BRECHA_CASCO = 'BRECHA_CASCO',                   // 💨 Devuelve sistema rival a su mano (descarta sus cartas, dueño descarta si >3)
+  INTRUSION = 'INTRUSION',                         // 🔓 Roba sistema de oponente (con cartas). Falla vs blindaje
+  INTERFERENCIA = 'INTERFERENCIA',                 // 📡 Rival descarta 1 carta de mano
+  REPARACION_EMERGENCIA = 'REPARACION_EMERGENCIA', // 🔧 Descarta 1 carta tuya para eliminar 1 sabotaje
+  REDISTRIBUCION = 'REDISTRIBUCION',               // ♻️ Intercambia TODOS los sistemas entre 2 jugadores
+  COLAPSO_SISTEMICO = 'COLAPSO_SISTEMICO',         // ☠️ Todos los RIVALES descartan su mano (no el jugador)
+  RECUPERACION = 'RECUPERACION',                   // 💾 Reinstala sistema del descarte a slot vacío
 }
 
 interface Card {
