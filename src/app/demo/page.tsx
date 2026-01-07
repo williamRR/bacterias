@@ -14,34 +14,33 @@ export default function DemoPage() {
   const [selectedCards, setSelectedCards] = useState<Card[]>([]);
 
   const createMockPlayer = (name: string, id: string, hasAllOrgans: boolean = true): Player => {
+    const bodyMap = new Map();
+
+    SLOT_COLORS.forEach((color) => {
+      // Skip RED for player 2, skip BLUE for player 3 to show empty slots
+      if (!hasAllOrgans) {
+        if (id === 'player-2' && color === Color.RED) {
+          return; // Skip this slot (empty)
+        }
+        if (id === 'player-3' && color === Color.BLUE) {
+          return; // Skip this slot (empty)
+        }
+      }
+      bodyMap.set(color, {
+        organCard: {
+          id: `${color}-organ`,
+          type: CardType.ORGAN,
+          color,
+        },
+        virusCards: [],
+        medicineCards: [],
+      });
+    });
+
     return {
       id,
       name,
-      body: new Map(
-        SLOT_COLORS.map((color) => {
-          // Skip RED for player 2, skip BLUE for player 3 to show empty slots
-          if (!hasAllOrgans) {
-            if (id === 'player-2' && color === Color.RED) {
-              return [color, null];
-            }
-            if (id === 'player-3' && color === Color.BLUE) {
-              return [color, null];
-            }
-          }
-          return [
-            color,
-            {
-              organCard: {
-                id: `${color}-organ`,
-                type: CardType.ORGAN,
-                color,
-              },
-              virusCards: [],
-              medicineCards: [],
-            },
-          ];
-        })
-      ),
+      body: bodyMap,
       hand: [],
     };
   };
