@@ -40,7 +40,6 @@ scripts/*-api-key.txt
 API_KEY*
 
 # Assets generados (opcional - comenta si quieres versionar las imágenes)
-# public/assets/
 
 # Desarrollo y debugging
 logs/
