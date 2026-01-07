@@ -38,8 +38,6 @@ scripts/*-api-key.txt
 *.key
 API_KEY*
 
-# Assets generados
-public/assets/
 
 # Test files
 test-*.js
