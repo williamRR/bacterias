@@ -47,7 +47,7 @@ export default function DemoPage() {
 
   const createDemoCards = (): Card[] => [
     { id: 'v1', type: CardType.VIRUS, color: Color.RED },
-    { id: 't1', type: CardType.TREATMENT, color: Color.MULTICOLOR, treatmentType: TreatmentType.ENERGY_TRANSFER },
+    { id: 't1', type: CardType.TREATMENT, color: Color.MULTICOLOR, treatmentType: TreatmentType.DERIVACION_ENERGIA },
     { id: 'o1', type: CardType.ORGAN, color: Color.MULTICOLOR },
   ];
 
@@ -142,6 +142,7 @@ export default function DemoPage() {
           onDragStart={() => { }}
           onDragEnd={() => { }}
           onCardDiscard={() => { }}
+          onDiscardHand={() => { }}
           selectedCard={selectedCard}
           selectedCards={selectedCards}
           disabled={!isCurrentPlayer}

@@ -17,21 +17,21 @@ export function canPlayTreatment(
   }
 
   switch (card.treatmentType) {
-    case TreatmentType.ENERGY_TRANSFER:
+    case TreatmentType.DERIVACION_ENERGIA:
       return canPlayEnergyTransfer(card, gameState, currentPlayer, targetPlayer, targetColor, sourceColor, sourcePlayerId);
-    case TreatmentType.EMERGENCY_DECOMPRESSION:
+    case TreatmentType.BRECHA_CASCO:
       return canPlayEmergencyDecompression(card, targetPlayer, targetColor);
-    case TreatmentType.DATA_PIRACY:
+    case TreatmentType.INTRUSION:
       return canPlayDataPiracy(card, gameState, currentPlayer, targetPlayer, targetColor);
-    case TreatmentType.QUANTUM_DESYNC:
+    case TreatmentType.INTERFERENCIA:
       return canPlayQuantumDesync(card, gameState, targetPlayer);
-    case TreatmentType.PROTOCOL_ERROR:
+    case TreatmentType.REPARACION_EMERGENCIA:
       return canPlayProtocolError(card, gameState, currentPlayer, targetPlayer, targetColor);
-    case TreatmentType.SINGULARITY:
+    case TreatmentType.REDISTRIBUCION:
       return canPlaySingularity(card, gameState);
-    case TreatmentType.EVENT_HORIZON:
+    case TreatmentType.COLAPSO_SISTEMICO:
       return canPlayEventHorizon(card, gameState, currentPlayer);
-    case TreatmentType.BACKUP_SYSTEM:
+    case TreatmentType.RECUPERACION:
       return canPlayBackupSystem(card, gameState, currentPlayer, targetColor);
     default:
       return false;

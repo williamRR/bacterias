@@ -31,6 +31,7 @@ const getSystemColorValue = (color: Color): string => {
     case Color.GREEN: return '#10b981';
     case Color.YELLOW: return '#eab308';
     case Color.MULTICOLOR: return '#a855f7';
+    case Color.PURPLE: return '#a855f7';
     default: return '#94a3b8';
   }
 };
@@ -43,6 +44,7 @@ const getNeonConfig = (color: Color) => {
     [Color.GREEN]: 'text-emerald-400',
     [Color.YELLOW]: 'text-yellow-400',
     [Color.MULTICOLOR]: 'text-violet-400',
+    [Color.PURPLE]: 'text-violet-400',
   }[color] || 'text-gray-500';
 };
 

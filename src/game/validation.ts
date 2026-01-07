@@ -75,8 +75,8 @@ function canPlayTreatment(card: Card, gameState: any, currentPlayer: Player, tar
   }
 
   switch (card.treatmentType) {
-    case TreatmentType.ENERGY_TRANSFER: {
-      // ENERGY_TRANSFER requiere sourceColor y targetColor válidos
+    case TreatmentType.DERIVACION_ENERGIA: {
+      // DERIVACION_ENERGIA requiere sourceColor y targetColor válidos
       if (!targetColor) return false;
       const srcColor = sourceColor || targetColor;
 
@@ -105,15 +105,15 @@ function canPlayTreatment(card: Card, gameState: any, currentPlayer: Player, tar
       return !isSameSlot;
     }
 
-    case TreatmentType.EMERGENCY_DECOMPRESSION: {
-      // EMERGENCY_DECOMPRESSION requiere que el objetivo tenga un sistema
+    case TreatmentType.BRECHA_CASCO: {
+      // BRECHA_CASCO requiere que el objetivo tenga un sistema
       if (!targetColor) return false;
       const targetSlot = getSlotFromBody(targetPlayer.body, targetColor);
       return targetSlot?.organCard !== undefined;
     }
 
-    case TreatmentType.DATA_PIRACY: {
-      // DATA_PIRACY requiere que el jugador NO tenga el sistema y que el objetivo sí lo tenga
+    case TreatmentType.INTRUSION: {
+      // INTRUSION requiere que el jugador NO tenga el sistema y que el objetivo sí lo tenga
       if (!targetColor) return false;
       const playerSlot = getSlotFromBody(currentPlayer.body, targetColor);
       const targetSlot = getSlotFromBody(targetPlayer.body, targetColor);
@@ -124,13 +124,13 @@ function canPlayTreatment(card: Card, gameState: any, currentPlayer: Player, tar
       return getOrganState(targetSlot) !== OrganState.IMMUNIZED;
     }
 
-    case TreatmentType.QUANTUM_DESYNC: {
-      // QUANTUM_DESYNC requiere que el objetivo tenga cartas en su mano
+    case TreatmentType.INTERFERENCIA: {
+      // INTERFERENCIA requiere que el objetivo tenga cartas en su mano
       return targetPlayer.hand.length > 0;
     }
 
-    case TreatmentType.PROTOCOL_ERROR: {
-      // PROTOCOL_ERROR requiere que el jugador tenga cartas en su mano
+    case TreatmentType.REPARACION_EMERGENCIA: {
+      // REPARACION_EMERGENCIA requiere que el jugador tenga cartas en su mano
       // y que el objetivo tenga un virus en el sistema
       if (!targetColor) return false;
       if (currentPlayer.hand.length === 0) return false;
@@ -139,18 +139,18 @@ function canPlayTreatment(card: Card, gameState: any, currentPlayer: Player, tar
       return (targetSlot?.virusCards.length ?? 0) > 0;
     }
 
-    case TreatmentType.SINGULARITY: {
-      // SINGULARITY requiere al menos 2 jugadores en total (para intercambiar sus cuerpos)
+    case TreatmentType.REDISTRIBUCION: {
+      // REDISTRIBUCION requiere al menos 2 jugadores en total (para intercambiar sus cuerpos)
       return gameState.players.length >= 2;
     }
 
-    case TreatmentType.EVENT_HORIZON: {
-      // EVENT_HORIZON requiere que haya oponentes con cartas
+    case TreatmentType.COLAPSO_SISTEMICO: {
+      // COLAPSO_SISTEMICO requiere que haya oponentes con cartas
       return gameState.players.some((p: Player) => p.id !== currentPlayer.id && p.hand.length > 0);
     }
 
-    case TreatmentType.BACKUP_SYSTEM: {
-      // BACKUP_SYSTEM requiere:
+    case TreatmentType.RECUPERACION: {
+      // RECUPERACION requiere:
       // 1. El slot del jugador debe estar vacío (sin órgano)
       // 2. Debe haber un órgano del color correcto en el descarte
       if (!targetColor) return false;

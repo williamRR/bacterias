@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo, useRef } from 'react';
 import Modal from './Modal';
 import type { Card } from '../game/types';
 import { CardType as CardTypeEnum, Color } from '../game/types';
-import { CARD_TYPE_LABELS, TREATMENT_LABELS, TREATMENT_DESCRIPTIONS, COLOR_SYSTEM_LABELS, SYSTEM_SVG_ICONS, SvgIconVirus, SvgIconMedicine, SvgIconTreatment } from '../game/theme';
+import { CARD_TYPE_LABELS, TREATMENT_LABELS, TREATMENT_DESCRIPTIONS, COLOR_SYSTEM_LABELS, SYSTEM_SVG_ICONS, SvgIconVirus, SvgIconMedicine, SvgIconTreatment, TYPE_ICON_MASKS } from '../game/theme';
 
 interface CardProps {
   card: Card;
@@ -42,6 +42,9 @@ export default function Card({ card, onClick, onDragStart, onDragEnd, onDiscard,
         case 'MULTICOLOR':
         case '4':
           return '🖥️';
+        case 'PURPLE':
+        case '5':
+          return '⚡';
         default:
           return '🎴';
       }
@@ -59,6 +62,8 @@ export default function Card({ card, onClick, onDragStart, onDragEnd, onDiscard,
       '3': 'AGUA Y ALIMENTOS',
       'MULTICOLOR': 'SISTEMA OPERATIVO',
       '4': 'SISTEMA OPERATIVO',
+      'PURPLE': 'ACCIÓN ESPECIAL',
+      '5': 'ACCIÓN ESPECIAL',
     };
 
     const colorKey = card.color ? String(card.color).toUpperCase() : '';
@@ -143,6 +148,8 @@ export default function Card({ card, onClick, onDragStart, onDragEnd, onDiscard,
         '3': '234, 179, 8',
         'MULTICOLOR': '139, 92, 246', // SISTEMA OPERATIVO (Violet)
         '4': '139, 92, 246',
+        'PURPLE': '139, 92, 246',   // ACCIÓN ESPECIAL (Purple)
+        '5': '139, 92, 246',
       };
 
       if (card.color) {
@@ -182,7 +189,8 @@ export default function Card({ card, onClick, onDragStart, onDragEnd, onDiscard,
     const MainIconComponent = getMainIconComponent();
     const subtitle = getSubtitle();
     // TREATMENT_LABELS ahora usa string keys directamente para evitar problemas de optimización en Vercel
-    const treatmentLabel = card.treatmentType ? TREATMENT_LABELS[card.treatmentType] || null : null;
+    // Convertir explícitamente a string para asegurar el lookup correcto
+    const treatmentLabel = card.treatmentType ? (TREATMENT_LABELS[String(card.treatmentType)] || null) : null;
     const glowColor = getGlowColor();
     const typeBadgeLabel = getTypeBadgeLabel();
     const cardDescription = getCardDescription();
@@ -246,13 +254,13 @@ export default function Card({ card, onClick, onDragStart, onDragEnd, onDiscard,
         ${selected ? 'ring-2 ring-cyan-400 scale-[1.02] md:scale-105' : ''}
         ${draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}
         ${isHovered ? 'scale-[1.01] md:scale-[1.03] shadow-lg md:shadow-xl' : 'shadow-sm md:shadow-md'}
-        ${card.color === 'MULTICOLOR' && card.type !== 'TREATMENT' ? 'multicolor-card' : ''}
+        ${card.color === Color.MULTICOLOR ? 'multicolor-card' : ''}
         ${card.type === 'TREATMENT' ? 'action-card' : ''}
       `}
-        style={card.color === 'MULTICOLOR' && card.type !== 'TREATMENT' ? {} : {
+        style={card.color === Color.MULTICOLOR ? {} : {
           background: `linear-gradient(145deg, #1e293b 0%, #0f172a 100%)`,
-          border: `1.5px solid rgba(${cardData.glowColor}, 0.5)`,
-          boxShadow: isHovered ? `0 0 12px rgba(${cardData.glowColor}, 0.25)` : `0 0 6px rgba(${cardData.glowColor}, 0.15)`,
+          border: `1.5px solid rgb(${cardData.glowColor})`,
+          boxShadow: isHovered ? `0 0 12px rgba(${cardData.glowColor}, 0.6)` : `0 0 6px rgba(${cardData.glowColor}, 0.3)`,
         }}
       >
         {/* Header */}
@@ -287,28 +295,52 @@ export default function Card({ card, onClick, onDragStart, onDragEnd, onDiscard,
         {/* Icono central - Ajustado para no invadir el espacio */}
         <div className="flex-1 flex items-center justify-center min-h-0"> {/* min-h-0 ayuda a flexbox a no expandirse */}
           {cardData.MainIconComponent ? (
+            // PRIORIDAD: Primero mostrar el SVG del componente (VIRUS, MEDICINE, TREATMENT, ORGAN con color específico)
             <cardData.MainIconComponent
               className="w-8 h-8 md:w-12 md:h-12 drop-shadow-lg"
               style={{ color: `rgb(${cardData.glowColor})` }}
             />
+          ) : card.color === Color.MULTICOLOR ? (
+            // SEGUNDO: Para cartas MULTICOLOR sin SVG específico, usar el icono multicolor con mask
+            <div
+              className="w-8 h-8 md:w-12 md:h-12 drop-shadow-lg multicolor-icon-style"
+              style={{
+                WebkitMaskImage: TYPE_ICON_MASKS[card.type as CardTypeEnum] || TYPE_ICON_MASKS[CardTypeEnum.ORGAN],
+                maskImage: TYPE_ICON_MASKS[card.type as CardTypeEnum] || TYPE_ICON_MASKS[CardTypeEnum.ORGAN],
+              }}
+            />
           ) : (
-            <div className="text-2xl md:text-4xl drop-shadow-lg">{cardData.mainIcon}</div>
+            // TERCERO: Fallback al texto emoji
+            <div className="text-2xl md:text-4xl drop-shadow-lg" style={{ color: `rgb(${cardData.glowColor})` }}>
+              {cardData.mainIcon}
+            </div>
           )}
         </div>
 
         {/* Footer - Con límites de altura y desborde */}
-        <div className="text-center pb-1.5 md:pb-2 px-1 flex flex-col justify-end h-8 md:h-10">
-          {cardData.subtitle && (
-            <div className="text-[7px] md:text-[9px] text-white/80 uppercase tracking-tighter leading-none font-medium break-words line-clamp-2">
+        <div className="text-center pb-1 md:pb-1.5 px-1 flex flex-col justify-end h-10 md:h-12">
+          {cardData.treatmentLabel ? (
+            // Para ACCIÓN: mostrar el nombre más grande y visible
+            <div className="flex flex-col gap-0.5">
+              <div
+                className="text-[8px] md:text-[10px] font-bold uppercase leading-tight tracking-tight"
+                style={{ color: `rgb(${cardData.glowColor})` }}
+              >
+                {cardData.treatmentLabel}
+              </div>
+              <div className="text-[7px] md:text-[8px] text-white/60 uppercase tracking-wider">
+                ACCIÓN
+              </div>
+            </div>
+          ) : cardData.subtitle ? (
+            // Para otras cartas: mostrar subtítulo normalmente
+            <div className="text-[8px] md:text-[10px] text-white/90 uppercase tracking-tight leading-snug font-medium break-words line-clamp-2">
               {cardData.subtitle}
             </div>
-          )}
-          {cardData.treatmentLabel && (
-            <div
-              className="text-[6px] md:text-[8px] mt-0.5 font-bold leading-none truncate"
-              style={{ color: `rgb(${cardData.glowColor})` }}
-            >
-              {cardData.treatmentLabel}
+          ) : (
+            // Fallback: mostrar tipo de carta
+            <div className="text-[8px] md:text-[10px] text-white/70 uppercase tracking-wider">
+              {cardData.typeBadgeLabel}
             </div>
           )}
         </div>
@@ -335,11 +367,24 @@ export default function Card({ card, onClick, onDragStart, onDragEnd, onDiscard,
             </div>
             <div className="flex-1 flex items-center justify-center">
               {cardData.MainIconComponent ? (
+                // PRIORIDAD: SVG del componente (VIRUS, MEDICINE, TREATMENT, ORGAN)
                 <div className="text-7xl drop-shadow-2xl" style={{ color: `rgb(${cardData.glowColor})` }}>
                   <cardData.MainIconComponent className="w-full h-full" />
                 </div>
+              ) : card.color === Color.MULTICOLOR ? (
+                // SEGUNDO: Ícono multicolor con mask
+                <div
+                  className="w-20 h-20 drop-shadow-2xl multicolor-icon-style"
+                  style={{
+                    WebkitMaskImage: TYPE_ICON_MASKS[card.type as CardTypeEnum] || TYPE_ICON_MASKS[CardTypeEnum.ORGAN],
+                    maskImage: TYPE_ICON_MASKS[card.type as CardTypeEnum] || TYPE_ICON_MASKS[CardTypeEnum.ORGAN],
+                  }}
+                />
               ) : (
-                <div className="text-7xl drop-shadow-2xl">{cardData.mainIcon}</div>
+                // TERCERO: Fallback al texto
+                <div className="text-7xl drop-shadow-2xl" style={{ color: `rgb(${cardData.glowColor})` }}>
+                  {cardData.mainIcon}
+                </div>
               )}
             </div>
             <div className="text-center">

@@ -176,6 +176,7 @@ export default function RoomPage({ params }: RoomPageProps) {
     handleCardSelect,
     handleOrganClick,
     handleCardDiscard,
+    handleDiscardHand,
     handleEndTurn,
     isSlotValid,
     resetActions,
@@ -440,6 +441,7 @@ export default function RoomPage({ params }: RoomPageProps) {
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
           onCardDiscard={handleCardDiscard}
+          onDiscardHand={handleDiscardHand}
           selectedCard={selectedCard}
           selectedCards={selectedCards}
           disabled={!isCurrentPlayer}

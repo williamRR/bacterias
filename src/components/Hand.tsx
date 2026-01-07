@@ -13,6 +13,7 @@ interface HandProps {
   onDragStart?: (e: React.DragEvent, card: CardType) => void;
   onDragEnd?: () => void;
   onCardDiscard?: (card: CardType) => void;
+  onDiscardHand?: () => void;
   selectedCard: CardType | null;
   selectedCards: CardType[];
   disabled?: boolean;
@@ -27,6 +28,7 @@ export default function Hand({
   onDragStart,
   onDragEnd,
   onCardDiscard,
+  onDiscardHand,
   selectedCard,
   selectedCards,
   disabled = false,
@@ -67,43 +69,69 @@ export default function Hand({
           )}
         </div>
 
-        <div className="flex flex-col md:flex-row items-end md:items-center gap-1.5 md:gap-4 lg:gap-6">
-          {/* End Turn - more subtle on mobile */}
-          <div className="flex items-center justify-center gap-1 order-last md:order-first">
-            {isCurrentPlayer && onEndTurn ? (
-              <button
-                id="tour-end-turn"
-                onClick={onEndTurn}
-                className={`group relative flex items-center justify-center gap-1 px-2 py-1 md:px-5 md:py-3 min-w-[60px] md:min-w-0 md:w-20 md:h-20 lg:w-24 lg:h-24 md:flex-col rounded-md md:rounded-2xl font-black text-[8px] md:text-xs transition-all shadow-sm md:shadow-lg uppercase tracking-wider bg-gradient-to-br from-cyan-600/70 to-cyan-700/70 hover:from-cyan-500/80 hover:to-cyan-600/80 text-white shadow-cyan-900/20 active:scale-95 border border-cyan-500/15 ${actionsThisTurn === 0 ? 'opacity-60' : ''}`}
-              >
-                <div className="relative">
-                  <div
-                    className="w-4 h-4 md:w-7 md:h-7"
-                    style={{
-                      backgroundColor: SYSTEM_COLOR,
-                      maskImage: `url(${SYSTEM_ICON})`,
-                      WebkitMaskImage: `url(${SYSTEM_ICON})`,
-                      maskRepeat: 'no-repeat',
-                      WebkitMaskRepeat: 'no-repeat',
-                      maskPosition: 'center',
-                      WebkitMaskPosition: 'center',
-                      maskSize: 'contain',
-                      WebkitMaskSize: 'contain',
-                    }}
-                  />
-                  <span className="absolute -top-1 -right-1 text-[7px] md:text-[10px] font-bold text-white drop-shadow-md">
-                    {actionsThisTurn > 0 ? '+' : '-'}
+        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2 md:gap-4 lg:gap-6">
+          {/* Action Button Panel */}
+          <div className="flex items-center justify-between md:justify-center gap-2 p-1.5 md:p-2 bg-slate-800/40 backdrop-blur-md rounded-xl md:rounded-3xl border border-white/10 shadow-inner order-last md:order-first">
+            {/* End Turn Button */}
+            <button
+              id="tour-end-turn"
+              onClick={onEndTurn}
+              disabled={!isCurrentPlayer || !onEndTurn}
+              className={`group relative flex items-center justify-center gap-2 px-3 py-2 md:px-4 md:py-2.5 flex-1 md:flex-none md:w-[72px] md:h-[72px] lg:w-[80px] lg:h-[80px] md:flex-col rounded-lg md:rounded-2xl font-black text-[10px] md:text-[11px] transition-all uppercase tracking-wider border disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 ${!isCurrentPlayer || !onEndTurn
+                  ? 'bg-slate-700/30 border-slate-600/30 text-gray-400'
+                  : 'bg-gradient-to-br from-cyan-600/90 to-cyan-800/90 hover:from-cyan-500 hover:to-cyan-700 text-white shadow-lg shadow-cyan-900/40 border-cyan-400/30 animate-pulse-subtle'
+                }`}
+            >
+              <div className="relative flex items-center justify-center">
+                <div
+                  className="w-4 h-4 md:w-6 md:h-6 transition-transform group-hover:scale-110"
+                  style={{
+                    backgroundColor: 'currentColor',
+                    maskImage: `url(${SYSTEM_ICON})`,
+                    WebkitMaskImage: `url(${SYSTEM_ICON})`,
+                    maskRepeat: 'no-repeat',
+                    WebkitMaskRepeat: 'no-repeat',
+                    maskPosition: 'center',
+                    WebkitMaskPosition: 'center',
+                    maskSize: 'contain',
+                    WebkitMaskSize: 'contain',
+                  }}
+                />
+              </div>
+              <span className="hidden md:block text-[9px] md:text-[10px] md:mt-1 leading-tight">{UI_LABELS.endTurn}</span>
+              <span className="md:hidden text-[9px]">{UI_LABELS.endTurn}</span>
+
+              {isCurrentPlayer && actionsThisTurn > 0 && onEndTurn && (
+                <div className="absolute -top-1.5 -right-1.5 flex items-center justify-center">
+                  <span className="relative flex h-4 w-4 md:h-5 md:w-5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-4 w-4 md:h-5 md:w-5 bg-emerald-500 items-center justify-center text-[8px] md:text-[10px] text-slate-950 font-black border border-white/20">
+                      +{actionsThisTurn}
+                    </span>
                   </span>
                 </div>
-                <span className="hidden md:block text-[10px] md:text-sm md:mt-1">{UI_LABELS.endTurn}</span>
-                <span className="md:hidden text-[7px]">{UI_LABELS.endTurn}</span>
-                {actionsThisTurn > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 bg-emerald-500 text-slate-950 px-1 py-0.5 rounded-full text-[7px] md:text-[9px] font-bold animate-pulse">+1</span>
-                )}
-              </button>
-            ) : (
-              <div className="w-[60px] md:w-20 md:h-20 lg:w-24 lg:h-24" />
-            )}
+              )}
+            </button>
+
+            {/* Discard Hand Button */}
+            <button
+              onClick={onDiscardHand}
+              disabled={!isCurrentPlayer || !onDiscardHand || cards.length === 0}
+              className={`group relative flex items-center justify-center gap-2 px-3 py-2 md:px-4 md:py-2.5 flex-1 md:flex-none md:w-[72px] md:h-[72px] lg:w-[80px] lg:h-[80px] md:flex-col rounded-lg md:rounded-2xl font-black text-[10px] md:text-[11px] transition-all uppercase tracking-wider border disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 ${!isCurrentPlayer || !onDiscardHand || cards.length === 0
+                  ? 'bg-slate-700/30 border-slate-600/30 text-gray-400'
+                  : 'bg-gradient-to-br from-red-600/80 to-red-800/80 hover:from-red-500 hover:to-red-700 text-white shadow-lg shadow-red-900/40 border-red-400/30'
+                }`}
+            >
+              <span className="text-sm md:text-xl transition-transform group-hover:scale-110">🗑️</span>
+              <span className="hidden md:block text-[9px] md:text-[10px] md:mt-1 leading-tight">Descartar</span>
+              <span className="md:hidden text-[9px]">Descartar</span>
+
+              {isCurrentPlayer && cards.length > 0 && onDiscardHand && (
+                <span className="absolute -top-1.5 -right-1.5 bg-white text-red-600 px-1 md:px-1.5 py-0.5 rounded-full text-[8px] md:text-[10px] font-black border border-red-500 shadow-sm min-w-[16px] md:min-w-[20px] text-center">
+                  {cards.length}
+                </span>
+              )}
+            </button>
           </div>
 
           {/* Cards area - reduced min-heights */}

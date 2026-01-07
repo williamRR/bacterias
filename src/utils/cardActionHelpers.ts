@@ -127,22 +127,22 @@ function getTreatmentLogMessage(card: Card, color: Color, targetPlayer: Player):
   }
 
   switch (card.treatmentType) {
-    case TreatmentType.ENERGY_TRANSFER:
-      return `Jugaste ${card.name || 'TRANSFERENCIA DE ENERGÍA'} en ${systemName}`;
-    case TreatmentType.EMERGENCY_DECOMPRESSION:
-      return `Jugaste ${card.name || 'DESCOMPRESIÓN DE EMERGENCIA'} en ${systemName} de ${targetPlayer.name}`;
-    case TreatmentType.DATA_PIRACY:
-      return `Jugaste ${card.name || 'PIRATERÍA DE DATOS'} de ${systemName} de ${targetPlayer.name}`;
-    case TreatmentType.QUANTUM_DESYNC:
-      return `Jugaste ${card.name || 'DESINCRONIZACIÓN CUÁNTICA'} en ${targetPlayer.name}`;
-    case TreatmentType.PROTOCOL_ERROR:
-      return `Jugaste ${card.name || 'ERROR DE PROTOCOLO'} en ${systemName} de ${targetPlayer.name}`;
-    case TreatmentType.SINGULARITY:
-      return `Jugaste ${card.name || 'SINGULARIDAD'}`;
-    case TreatmentType.EVENT_HORIZON:
-      return `Jugaste ${card.name || 'HORIZONTE DE SUCESOS'}`;
-    case TreatmentType.BACKUP_SYSTEM:
-      return `Jugaste ${card.name || 'SISTEMA DE RESPALDO'}`;
+    case TreatmentType.DERIVACION_ENERGIA:
+      return `Jugaste ${card.name || 'DERIVACIÓN DE ENERGÍA'} en ${systemName}`;
+    case TreatmentType.BRECHA_CASCO:
+      return `Jugaste ${card.name || 'BRECHA DE CASCO'} en ${systemName} de ${targetPlayer.name}`;
+    case TreatmentType.INTRUSION:
+      return `Jugaste ${card.name || 'INTRUSIÓN'} de ${systemName} de ${targetPlayer.name}`;
+    case TreatmentType.INTERFERENCIA:
+      return `Jugaste ${card.name || 'INTERFERENCIA'} en ${targetPlayer.name}`;
+    case TreatmentType.REPARACION_EMERGENCIA:
+      return `Jugaste ${card.name || 'REPARACIÓN DE EMERGENCIA'} en ${systemName} de ${targetPlayer.name}`;
+    case TreatmentType.REDISTRIBUCION:
+      return `Jugaste ${card.name || 'REDISTRIBUCIÓN'}`;
+    case TreatmentType.COLAPSO_SISTEMICO:
+      return `Jugaste ${card.name || 'COLAPSO SISTÉMICO'}`;
+    case TreatmentType.RECUPERACION:
+      return `Jugaste ${card.name || 'RECUPERACIÓN'}`;
     default:
       return 'Jugaste una carta de ACCIÓN';
   }
@@ -150,11 +150,11 @@ function getTreatmentLogMessage(card: Card, color: Color, targetPlayer: Player):
 
 export function getEnergyTransferLogMessage(card: Card, color: Color): string {
   const systemName = COLOR_SYSTEM_LABELS[color];
-  return `Usaste ${card.name || 'TRANSFERENCIA DE ENERGÍA'} para mover avería/mejora en ${systemName}`;
+  return `Usaste ${card.name || 'DERIVACIÓN DE ENERGÍA'} para mover avería/mejora en ${systemName}`;
 }
 
 export function getSingularityLogMessage(card: Card, firstPlayerName?: string, secondPlayerName?: string): string {
-  return `Usaste ${card.name || 'SINGULARIDAD'} para intercambiar todos los sistemas entre ${firstPlayerName || 'jugador'} y ${secondPlayerName || 'jugador'}`;
+  return `Usaste ${card.name || 'REDISTRIBUCIÓN'} para intercambiar todos los sistemas entre ${firstPlayerName || 'jugador'} y ${secondPlayerName || 'jugador'}`;
 }
 
 export function getCardPlayNotification(
@@ -194,22 +194,22 @@ function getTreatmentNotification(
   }
 
   switch (card.treatmentType) {
-    case TreatmentType.ENERGY_TRANSFER:
-      return { message: `Transferencia de energía en ${systemName}`, type: 'success' };
-    case TreatmentType.EMERGENCY_DECOMPRESSION:
-      return { message: `¡Descompresión de emergencia en ${systemName} de ${targetPlayer.name}!`, type: 'warning' };
-    case TreatmentType.DATA_PIRACY:
-      return { message: `¡${systemName} pirateado de ${targetPlayer.name}!`, type: 'success' };
-    case TreatmentType.QUANTUM_DESYNC:
-      return { message: `Desincronización cuántica en ${targetPlayer.name}`, type: 'info' };
-    case TreatmentType.PROTOCOL_ERROR:
-      return { message: `Error de protocolo en ${systemName} de ${targetPlayer.name}`, type: 'success' };
-    case TreatmentType.SINGULARITY:
-      return { message: `¡SINGULARIDAD activada!`, type: 'warning' };
-    case TreatmentType.EVENT_HORIZON:
-      return { message: `Horizonte de sucesos activado`, type: 'info' };
-    case TreatmentType.BACKUP_SYSTEM:
-      return { message: `Sistema de respaldo activado`, type: 'success' };
+    case TreatmentType.DERIVACION_ENERGIA:
+      return { message: `Derivación de energía en ${systemName}`, type: 'success' };
+    case TreatmentType.BRECHA_CASCO:
+      return { message: `¡BRECHA DE CASCO en ${systemName} de ${targetPlayer.name}!`, type: 'warning' };
+    case TreatmentType.INTRUSION:
+      return { message: `¡${systemName} robado de ${targetPlayer.name}!`, type: 'success' };
+    case TreatmentType.INTERFERENCIA:
+      return { message: `Interferencia en ${targetPlayer.name}`, type: 'info' };
+    case TreatmentType.REPARACION_EMERGENCIA:
+      return { message: `Reparación de emergencia en ${systemName} de ${targetPlayer.name}`, type: 'success' };
+    case TreatmentType.REDISTRIBUCION:
+      return { message: `¡REDISTRIBUCIÓN activada!`, type: 'warning' };
+    case TreatmentType.COLAPSO_SISTEMICO:
+      return { message: `COLAPSO SISTÉMICO activado`, type: 'info' };
+    case TreatmentType.RECUPERACION:
+      return { message: `RECUPERACIÓN activada`, type: 'success' };
     default:
       return { message: 'Acción especial ejecutada', type: 'info' };
   }
@@ -218,14 +218,14 @@ function getTreatmentNotification(
 export function getEnergyTransferNotification(color: Color): { message: string; type: 'success' } {
   const systemName = COLOR_SYSTEM_LABELS[color];
   return {
-    message: `¡Transferencia de energía completada en ${systemName}!`,
+    message: `¡Derivación de energía completada en ${systemName}!`,
     type: 'success',
   };
 }
 
 export function getSingularityNotification(firstPlayerName?: string, secondPlayerName?: string): { message: string; type: 'warning' } {
   return {
-    message: `¡SINGULARIDAD! ${firstPlayerName || 'Jugador 1'} ↔ ${secondPlayerName || 'Jugador 2'}: sistemas intercambiados.`,
+    message: `¡REDISTRIBUCIÓN! ${firstPlayerName || 'Jugador 1'} ↔ ${secondPlayerName || 'Jugador 2'}: sistemas intercambiados.`,
     type: 'warning',
   };
 }

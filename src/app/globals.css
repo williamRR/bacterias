@@ -310,7 +310,18 @@
       conic-gradient(from 0deg, #f97316, #06b6d4, #10b981, #eab308, #8b5cf6, #f97316);
     background-origin: border-box;
     background-clip: padding-box, border-box;
-    animation: borderRotate 2s linear infinite;
+    animation: borderRotate 3s linear infinite;
+  }
+
+  .multicolor-icon-style {
+    background: conic-gradient(from 0deg, #f97316, #06b6d4, #10b981, #eab308, #8b5cf6, #f97316);
+    animation: iconRotate 3s linear infinite;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-size: contain;
+    mask-size: contain;
   }
 
   @keyframes borderRotate {
@@ -344,13 +355,40 @@
         conic-gradient(from 360deg, #f97316, #06b6d4, #10b981, #eab308, #8b5cf6, #f97316);
     }
   }
+
+  @keyframes iconRotate {
+    0% {
+      background: conic-gradient(from 0deg, #f97316, #06b6d4, #10b981, #eab308, #8b5cf6, #f97316);
+    }
+
+    20% {
+      background: conic-gradient(from 72deg, #f97316, #06b6d4, #10b981, #eab308, #8b5cf6, #f97316);
+    }
+
+    40% {
+      background: conic-gradient(from 144deg, #f97316, #06b6d4, #10b981, #eab308, #8b5cf6, #f97316);
+    }
+
+    60% {
+      background: conic-gradient(from 216deg, #f97316, #06b6d4, #10b981, #eab308, #8b5cf6, #f97316);
+    }
+
+    80% {
+      background: conic-gradient(from 288deg, #f97316, #06b6d4, #10b981, #eab308, #8b5cf6, #f97316);
+    }
+
+    100% {
+      background: conic-gradient(from 360deg, #f97316, #06b6d4, #10b981, #eab308, #8b5cf6, #f97316);
+    }
+  }
 }
 
 /* Action cards (TREATMENT) - pulsing electric effect */
 @layer components {
   .action-card {
     position: relative;
-    animation: electricPulse 2s ease-in-out infinite;
+    border: 1.5px solid rgba(139, 92, 246, 0.8) !important;
+    box-shadow: 0 0 10px rgba(139, 92, 246, 0.4) !important;
   }
 
   @keyframes electricPulse {

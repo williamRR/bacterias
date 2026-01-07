@@ -37,47 +37,53 @@ export function getCardActionMessage(
 
   if (card.type === 'TREATMENT' && card.treatmentType) {
     switch (card.treatmentType) {
-      case TreatmentType.ENERGY_TRANSFER:
+      case TreatmentType.DERIVACION_ENERGIA:
         return {
           type: 'success',
-          message: `Transferencia de energía en ${systemName}`,
-          logMessage: `Jugaste TRANSFERENCIA DE ENERGÍA en ${systemName}`
+          message: `Derivación de energía en ${systemName}`,
+          logMessage: `Jugaste DERIVACIÓN DE ENERGÍA en ${systemName}`
         };
-      case TreatmentType.EMERGENCY_DECOMPRESSION:
+      case TreatmentType.BRECHA_CASCO:
         return {
           type: 'warning',
-          message: `¡Descompresión de emergencia en ${systemName} de ${targetPlayer.name}!`,
-          logMessage: `Jugaste DESCOMPRESIÓN DE EMERGENCIA en ${systemName} de ${targetPlayer.name}`
+          message: `¡BRECHA DE CASCO en ${systemName} de ${targetPlayer.name}!`,
+          logMessage: `Jugaste BRECHA DE CASCO en ${systemName} de ${targetPlayer.name}`
         };
-      case TreatmentType.DATA_PIRACY:
+      case TreatmentType.INTRUSION:
         return {
           type: 'success',
-          message: `¡${systemName} pirateado de ${targetPlayer.name}!`,
-          logMessage: `Jugaste PIRATERÍA DE DATOS de ${systemName} de ${targetPlayer.name}`
+          message: `¡${systemName} robado de ${targetPlayer.name}!`,
+          logMessage: `Jugaste INTRUSIÓN de ${systemName} de ${targetPlayer.name}`
         };
-      case TreatmentType.QUANTUM_DESYNC:
+      case TreatmentType.INTERFERENCIA:
         return {
           type: 'info',
-          message: `Desincronización cuántica en ${targetPlayer.name}`,
-          logMessage: `Jugaste DESINCRONIZACIÓN CUÁNTICA en ${targetPlayer.name}`
+          message: `Interferencia en ${targetPlayer.name}`,
+          logMessage: `Jugaste INTERFERENCIA en ${targetPlayer.name}`
         };
-      case TreatmentType.PROTOCOL_ERROR:
+      case TreatmentType.REPARACION_EMERGENCIA:
         return {
           type: 'success',
-          message: `Error de protocolo en ${systemName} de ${targetPlayer.name}`,
-          logMessage: `Jugaste ERROR DE PROTOCOLO en ${systemName} de ${targetPlayer.name}`
+          message: `Reparación de emergencia en ${systemName} de ${targetPlayer.name}`,
+          logMessage: `Jugaste REPARACIÓN DE EMERGENCIA en ${systemName} de ${targetPlayer.name}`
         };
-      case TreatmentType.SINGULARITY:
+      case TreatmentType.REDISTRIBUCION:
         return {
           type: 'warning',
-          message: `¡SINGULARIDAD activada!`,
-          logMessage: `Jugaste SINGULARIDAD`
+          message: `¡REDISTRIBUCIÓN activada!`,
+          logMessage: `Jugaste REDISTRIBUCIÓN`
         };
-      case TreatmentType.EVENT_HORIZON:
+      case TreatmentType.COLAPSO_SISTEMICO:
         return {
           type: 'info',
-          message: `Horizonte de sucesos activado`,
-          logMessage: `Jugaste HORIZONTE DE SUCESOS`
+          message: `COLAPSO SISTÉMICO activado`,
+          logMessage: `Jugaste COLAPSO SISTÉMICO`
+        };
+      case TreatmentType.RECUPERACION:
+        return {
+          type: 'success',
+          message: `RECUPERACIÓN activada`,
+          logMessage: `Jugaste RECUPERACIÓN`
         };
     }
   }

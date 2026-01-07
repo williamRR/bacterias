@@ -98,11 +98,11 @@ export function calculateAllPlayersExcept(
 }
 
 export function isSingularityCard(card: Card): boolean {
-  return card.type === 'TREATMENT' && card.treatmentType === TreatmentType.SINGULARITY;
+  return card.type === 'TREATMENT' && card.treatmentType === TreatmentType.REDISTRIBUCION;
 }
 
 export function isEnergyTransferCard(card: Card): boolean {
-  return card.type === 'TREATMENT' && card.treatmentType === TreatmentType.ENERGY_TRANSFER;
+  return card.type === 'TREATMENT' && card.treatmentType === TreatmentType.DERIVACION_ENERGIA;
 }
 
 export function buildTargetKey(playerId: string, color: Color): string {

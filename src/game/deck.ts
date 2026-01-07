@@ -8,24 +8,32 @@ const CARD_CONFIG = {
 } as const;
 
 const TREATMENT_CARDS = [
-  TreatmentType.ENERGY_TRANSFER,
-  TreatmentType.ENERGY_TRANSFER,
-  TreatmentType.EMERGENCY_DECOMPRESSION,
-  TreatmentType.EMERGENCY_DECOMPRESSION,
-  TreatmentType.DATA_PIRACY,
-  TreatmentType.DATA_PIRACY,
-  TreatmentType.DATA_PIRACY,
-  TreatmentType.QUANTUM_DESYNC,
-  TreatmentType.QUANTUM_DESYNC,
-  TreatmentType.PROTOCOL_ERROR,
-  TreatmentType.PROTOCOL_ERROR,
-  TreatmentType.PROTOCOL_ERROR,
-  TreatmentType.SINGULARITY,
-  TreatmentType.SINGULARITY,
-  TreatmentType.EVENT_HORIZON,
-  TreatmentType.EVENT_HORIZON,
-  TreatmentType.BACKUP_SYSTEM,      // Nueva carta de comeback
-  TreatmentType.BACKUP_SYSTEM,      // 2 copias para que sea accesible
+  // ⚡ DERIVACIÓN DE ENERGÍA (2)
+  TreatmentType.DERIVACION_ENERGIA,
+  TreatmentType.DERIVACION_ENERGIA,
+  // 💨 BRECHA DE CASCO (2)
+  TreatmentType.BRECHA_CASCO,
+  TreatmentType.BRECHA_CASCO,
+  // 🔓 INTRUSIÓN (3)
+  TreatmentType.INTRUSION,
+  TreatmentType.INTRUSION,
+  TreatmentType.INTRUSION,
+  // 📡 INTERFERENCIA (2)
+  TreatmentType.INTERFERENCIA,
+  TreatmentType.INTERFERENCIA,
+  // 🔧 REPARACIÓN DE EMERGENCIA (3)
+  TreatmentType.REPARACION_EMERGENCIA,
+  TreatmentType.REPARACION_EMERGENCIA,
+  TreatmentType.REPARACION_EMERGENCIA,
+  // ♻️ REDISTRIBUCIÓN (2)
+  TreatmentType.REDISTRIBUCION,
+  TreatmentType.REDISTRIBUCION,
+  // ☠️ COLAPSO SISTÉMICO (2)
+  TreatmentType.COLAPSO_SISTEMICO,
+  TreatmentType.COLAPSO_SISTEMICO,
+  // 💾 RECUPERACIÓN (2)
+  TreatmentType.RECUPERACION,
+  TreatmentType.RECUPERACION,
 ] as const;
 
 function createDeck(): Card[] {
@@ -41,12 +49,12 @@ function createDeck(): Card[] {
     });
   });
 
-  // Crear cartas de tratamiento
+  // Crear cartas de tratamiento con color PURPLE
   TREATMENT_CARDS.forEach(treatmentType => {
     deck.push({
       id: `card-${cardId++}`,
       type: CardType.TREATMENT,
-      color: Color.MULTICOLOR,
+      color: Color.PURPLE,
       treatmentType,
     });
   });

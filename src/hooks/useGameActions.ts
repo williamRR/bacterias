@@ -317,6 +317,31 @@ export function useGameActions({
     notify('Turno finalizado', 'info');
   }, [socket, roomId, notify, addToGameLog]);
 
+  const handleDiscardHand = useCallback(() => {
+    const currentPlayer = gameState?.players.find((p) => p.id === currentPlayerId);
+    if (!currentPlayer || currentPlayer.hand.length === 0) {
+      notify('No tienes cartas para descartar', 'warning');
+      return;
+    }
+
+    const cards = currentPlayer.hand;
+    const message = {
+      type: 'discard-cards',
+      roomId,
+      cards,
+    };
+
+    socket?.emit('game-action', message);
+
+    playDiscardSound();
+    notify(`Descartaste ${cards.length} carta${cards.length > 1 ? 's' : ''}`, 'info');
+    addToGameLog(`Descartaste ${cards.length} carta${cards.length > 1 ? 's' : ''}`);
+
+    setSelectedCard(null);
+    setSelectedCards([]);
+    setValidTargets(new Set());
+  }, [socket, roomId, currentPlayerId, gameState, notify, addToGameLog]);
+
   const isSlotValid = useCallback(
     (playerId: string, color: Color): boolean => {
       return validTargets.has(`${playerId}-${color}`);
@@ -335,6 +360,7 @@ export function useGameActions({
     handleCardSelect,
     handleOrganClick,
     handleCardDiscard,
+    handleDiscardHand,
     handleEndTurn,
     isSlotValid,
     resetActions,
