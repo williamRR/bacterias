@@ -163,8 +163,8 @@ export default function Card({ card, onClick, onDragStart, onDragEnd, onDiscard,
 
     const mainIcon = getMainIcon();
     const subtitle = getSubtitle();
-    // Debug temporal para encontrar el problema
-    const treatmentLabel = card.treatmentType ? TREATMENT_LABELS[card.treatmentType as keyof typeof TREATMENT_LABELS] : null;
+    // TREATMENT_LABELS ahora usa string keys directamente para evitar problemas de optimización en Vercel
+    const treatmentLabel = card.treatmentType ? TREATMENT_LABELS[card.treatmentType] || null : null;
     const glowColor = getGlowColor();
     const typeBadgeLabel = getTypeBadgeLabel();
     const cardDescription = getCardDescription();

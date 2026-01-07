@@ -148,8 +148,10 @@ app.prepare().then(() => {
 
     socket.on('disconnect', () => {
       // Eliminar al jugador de todas las salas donde esté
+      // Usar browserId si existe, sino usar socket.id
+      const playerId = (socket as any).browserId || socket.id;
       const { deletePlayerFromRoom } = require('./src/server/rooms');
-      deletePlayerFromRoom(socket.id);
+      deletePlayerFromRoom(playerId);
     });
   });
 

@@ -18,27 +18,28 @@ export const CARD_TYPE_LABELS: Record<CardType, string> = {
 } as const;
 
 // Mapping de TreatmentType a nombres espaciales
-export const TREATMENT_LABELS: Record<TreatmentType, string> = {
-  [TreatmentType.ENERGY_TRANSFER]: 'TRANSFERENCIA DE ENERGÍA',
-  [TreatmentType.EMERGENCY_DECOMPRESSION]: 'DESCOMPRESIÓN DE EMERGENCIA',
-  [TreatmentType.DATA_PIRACY]: 'PIRATERÍA DE DATOS',
-  [TreatmentType.QUANTUM_DESYNC]: 'DESINCRONIZACIÓN CUÁNTICA',
-  [TreatmentType.PROTOCOL_ERROR]: 'ERROR DE PROTOCOLO',
-  [TreatmentType.SINGULARITY]: 'SINGULARIDAD',
-  [TreatmentType.EVENT_HORIZON]: 'HORIZONTE DE SUCESOS',
-  [TreatmentType.BACKUP_SYSTEM]: 'SISTEMA DE RESPALDO',
-} as const;
+// Usamos string keys directamente para evitar problemas de optimización en Vercel
+export const TREATMENT_LABELS: Record<string, string> = {
+  ENERGY_TRANSFER: 'TRANSFERENCIA DE ENERGÍA',
+  EMERGENCY_DECOMPRESSION: 'DESCOMPRESIÓN DE EMERGENCIA',
+  DATA_PIRACY: 'PIRATERÍA DE DATOS',
+  QUANTUM_DESYNC: 'DESINCRONIZACIÓN CUÁNTICA',
+  PROTOCOL_ERROR: 'ERROR DE PROTOCOLO',
+  SINGULARITY: 'SINGULARIDAD',
+  EVENT_HORIZON: 'HORIZONTE DE SUCESOS',
+  BACKUP_SYSTEM: 'SISTEMA DE RESPALDO',
+};
 
-export const TREATMENT_DESCRIPTIONS: Record<TreatmentType, string> = {
-  [TreatmentType.ENERGY_TRANSFER]: 'Mueve una avería o mejora de un módulo a otro del mismo tipo.',
-  [TreatmentType.EMERGENCY_DECOMPRESSION]: 'Regresa un módulo rival a su mano. Descarta sus cartas unidas.',
-  [TreatmentType.DATA_PIRACY]: 'Roba un módulo de un oponente (con sus cartas unidas). No funciona en sistemas blindados.',
-  [TreatmentType.QUANTUM_DESYNC]: 'El oponente objetivo descarta una carta de su mano.',
-  [TreatmentType.PROTOCOL_ERROR]: 'Descarta una carta de tu mano para eliminar una avería objetivo.',
-  [TreatmentType.SINGULARITY]: 'Intercambia todos los sistemas entre dos jugadores.',
-  [TreatmentType.EVENT_HORIZON]: 'Todos tus oponentes descartan su mano completa.',
-  [TreatmentType.BACKUP_SYSTEM]: 'Recupera un sistema destruido del descarte y lo reinstala.',
-} as const;
+export const TREATMENT_DESCRIPTIONS: Record<string, string> = {
+  ENERGY_TRANSFER: 'Mueve una avería o mejora de un módulo a otro del mismo tipo.',
+  EMERGENCY_DECOMPRESSION: 'Regresa un módulo rival a su mano. Descarta sus cartas unidas.',
+  DATA_PIRACY: 'Roba un módulo de un oponente (con sus cartas unidas). No funciona en sistemas blindados.',
+  QUANTUM_DESYNC: 'El oponente objetivo descarta una carta de su mano.',
+  PROTOCOL_ERROR: 'Descarta una carta de tu mano para eliminar una avería objetivo.',
+  SINGULARITY: 'Intercambia todos los sistemas entre dos jugadores.',
+  EVENT_HORIZON: 'Todos tus oponentes descartan su mano completa.',
+  BACKUP_SYSTEM: 'Recupera un sistema destruido del descarte y lo reinstala.',
+};
 
 // Mapping de OrganState a nombres espaciales
 export const ORGAN_STATE_LABELS: Record<OrganState, string> = {
