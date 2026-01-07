@@ -1,8 +1,9 @@
 [build]
   builder = "NIXPACKS"
-  buildCommand = "pnpm install --no-frozen-lockfile && npm run build"
+  buildCommand = "pnpm install && npm run build"
 
 [deploy]
+  startCommand = "NODE_ENV=production tsx server.ts"
   healthcheckPath = "/api/health"
   healthcheckTimeout = 300
   restartPolicyType = "ON_FAILURE"
