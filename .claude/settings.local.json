@@ -28,7 +28,18 @@
       "Bash(vercel env rm:*)",
       "Bash(vercel --prod)",
       "Bash(vercel ls:*)",
-      "Bash(vercel projects ls:*)"
+      "Bash(vercel projects ls:*)",
+      "Bash(npm run build:*)",
+      "Bash(vercel inspect:*)",
+      "Bash(vercel domains ls:*)",
+      "Bash(cat:*)",
+      "Bash(vercel domains inspect:*)",
+      "Bash(vercel:*)",
+      "Bash(npm run simulate:debug:*)",
+      "Bash(npm run simulate:*)",
+      "Bash(npx tsx:*)",
+      "Bash(railway --version:*)",
+      "Bash(railway:*)"
     ]
   }
 }
