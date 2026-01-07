@@ -43,6 +43,11 @@ app.prepare().then(() => {
       // Debug endpoint para ver estado de una sala
       if (req.url?.startsWith('/api/room/')) {
         const roomId = req.url.split('/').pop();
+        if (!roomId) {
+          res.statusCode = 400;
+          res.end(JSON.stringify({ error: 'Invalid room ID' }));
+          return;
+        }
         const room = getRoom(roomId);
         if (room) {
           res.setHeader('Content-Type', 'application/json');
